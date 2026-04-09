@@ -34,8 +34,8 @@ internal static class DataParser
                     GazeTargetTreeId = int.Parse(parts[6]),
                     GrabTargetTreeId = int.Parse(parts[7]),
                     GrabNonTargetTreeId = int.Parse(parts[8]),
-                    DrivingStart = parts[9] == "1",
-                    DrivingEnd = parts[10] == "1"
+                    DrivingStart = parts[9] != "0",
+                    DrivingEnd = parts[10] != "0"
                 };
 
                 result.Add(record);

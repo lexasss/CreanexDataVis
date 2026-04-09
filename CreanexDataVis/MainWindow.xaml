@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:CreanexDataVis"
         mc:Ignorable="d"
         Title="Creanex data visualization"
+        Icon="/Assets/Images/icon.png"
         Height="300"
         Width="1200"
         PreviewMouseDoubleClick="Window_PreviewMouseDoubleClick">
@@ -28,7 +29,7 @@
                     <Setter Property="Margin" Value="2"/>
                 </Style>
             </StackPanel.Resources>
-            <Label>Grab</Label>
+            <Label>Harvester events</Label>
             <Label>Left Window</Label>
             <Label>Front Window</Label>
             <Label>Right Window</Label>
