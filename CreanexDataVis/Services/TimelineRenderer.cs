@@ -15,7 +15,7 @@ internal class TimelineRenderer
         long startTime = records[0].TimeStamp;
         long endTime = records[^1].TimeStamp;
 
-        int trackCount = 1 + TrackColors.Length; // +1 for grab events
+        int trackCount = 1 + TrackBrushes.Length; // +1 for grab events
 
         int width = (int)((endTime - startTime) * MsToPixel) + 20;
         int height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight; // +extra track for timeline labels
@@ -23,7 +23,7 @@ internal class TimelineRenderer
         int stride = width * 4;
         byte[] pixels = new byte[height * stride];
 
-        var context = new Context(pixels, width, height, stride, trackCount);
+        //var context = new Context(pixels, width, height, stride, trackCount);
 
         var bitmap = new RenderTargetBitmap(
             width,
@@ -31,10 +31,10 @@ internal class TimelineRenderer
             96, 96,
             PixelFormats.Pbgra32);
 
-        var image = DrawTracks(context, records);
+        var image = DrawTracks(records);
         bitmap.Render(image);
 
-        var timeline = DrawTimeline(context, records);
+        var timeline = DrawTimeline(records, trackCount * (TrackHeight + TrackSpacing));
         bitmap.Render(timeline);
 
         return bitmap;
@@ -50,15 +50,18 @@ internal class TimelineRenderer
     private const double StripWidth = 60 * MsToPixel; // pixels
     private const int TimeInterval = 1000;            // ms
 
-    private readonly Color TrackBackground = Color.FromRgb(220, 220, 220);
-    private readonly Color[] TrackColors =
+    private readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
+    private readonly Typeface TimelineFontFamily = new Typeface("Segoe UI");
+    private readonly Brush TimelineBrush = Brushes.Black;
+    private readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
+    private readonly Brush[] TrackBrushes =
     [
-        Colors.DarkRed,
-        Colors.Blue,
-        Colors.Orange,
-        Colors.Purple,
-        Colors.Olive,
-        Colors.Green,
+        new SolidColorBrush(Colors.DarkRed),
+        new SolidColorBrush(Colors.Blue),
+        new SolidColorBrush(Colors.Orange),
+        new SolidColorBrush(Colors.Purple),
+        new SolidColorBrush(Colors.Olive),
+        new SolidColorBrush(Colors.Green),
     ];
     /*
     private readonly string[] TrackNames =
@@ -70,7 +73,7 @@ internal class TimelineRenderer
         "TDA Screen",
         "Harvester Head",
         "Tree"
-    ];*/
+    ];
 
     private record class Context(byte[] Pixels, int Width, int Height, int Stride, int TrackCount);
 
@@ -126,10 +129,58 @@ internal class TimelineRenderer
         }
 
         return dv;
+    }*/
+
+    DrawingVisual DrawTracks(MappingRecord[] records)
+    {
+        long startTime = records[0].TimeStamp;
+        long endTime = records[^1].TimeStamp;
+
+        int trackCount = 1 + TrackBrushes.Length; // +1 for grab events
+
+        int width = (int)((endTime - startTime) * MsToPixel) + 20;
+
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+
+            for (int i = 0; i < trackCount; i++)
+            {
+                int y = Margin + i * (TrackHeight + TrackSpacing);
+                dc.DrawRectangle(TrackBackgroundBrush, null, new Rect(0, y, width, TrackHeight));
+            }
+
+            for (int i = 0; i < records.Length; i++)
+            {
+                var r = records[i];
+
+                int x = (int)((r.TimeStamp - startTime) * MsToPixel);
+
+                DrawTrack(dc, r.GazeLeftWindow, TrackBrushes, 0, x);
+                DrawTrack(dc, r.GazeFrontWindow, TrackBrushes, 1, x);
+                DrawTrack(dc, r.GazeRightWindow, TrackBrushes, 2, x);
+                DrawTrack(dc, r.GazeTDAScreen, TrackBrushes, 3, x);
+                DrawTrack(dc, r.GazeHarvesterHead, TrackBrushes, 4, x);
+                DrawTrack(dc, r.GazeTargetTreeId > 0, TrackBrushes, 5, x);
+
+                // Grab event (above tracks)
+                int dotY = Margin + TrackHeight / 2;
+
+                if (r.GrabTargetTreeId > 0)
+                    dc.DrawEllipse(new SolidColorBrush(Colors.Green), null, new Point(x, dotY), DotSize/2, DotSize/2);
+
+                if (r.GrabNonTargetTreeId > 0)
+                    dc.DrawEllipse(new SolidColorBrush(Colors.Red), null, new Point(x, dotY), DotSize / 2, DotSize / 2);
+            }
+        }
+
+        return dv;
     }
 
-    static DrawingVisual DrawTimeline(Context context, MappingRecord[] records)
+    DrawingVisual DrawTimeline(MappingRecord[] records, int y)
     {
+        double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
+        
         var dv = new DrawingVisual();
 
         using (var dc = dv.RenderOpen())
@@ -138,25 +189,40 @@ internal class TimelineRenderer
             long endTime = records[^1].TimeStamp;
 
             long time = startTime;
+
             while (time < endTime)
             {
                 var t = time - startTime;
+                time += TimeInterval;
+
                 int x = (int)(t * MsToPixel);
 
-                DrawText(dc,
-                    (t / 1000).ToString("N1"),
-                    x, 
-                    context.Height - Margin - TrackHeight / 2,
-                    10,
-                    Brushes.DimGray);
-
-                time += TimeInterval;
+                dc.DrawText(
+                    new FormattedText(
+                        (t / 1000).ToString("N1"),
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        FlowDirection.LeftToRight,
+                        TimelineFontFamily,
+                        TimelineFontSize,
+                        TimelineBrush,
+                        dpi),
+                    new Point(x, y));
             }
         }
 
         return dv;
     }
 
+    void DrawTrack(DrawingContext dc, bool condition, Brush[] brushes, int trackIndex, int x)
+    {
+        if (!condition) return;
+
+        int y = Margin + (1 + trackIndex) * (TrackHeight + TrackSpacing);
+
+        dc.DrawRectangle(brushes[trackIndex], null, new Rect(x, y, StripWidth, TrackHeight));
+    }
+
+    /*
     void DrawBackgroundStrip(Context context, int yStart)
     {
         for (int y = 0; y < TrackHeight; y++)
@@ -168,9 +234,9 @@ internal class TimelineRenderer
             {
                 int index = py * context.Stride + px * 4;
 
-                context.Pixels[index + 0] = TrackBackground.B;
-                context.Pixels[index + 1] = TrackBackground.G;
-                context.Pixels[index + 2] = TrackBackground.R;
+                context.Pixels[index + 0] = TrackBackgroundColor.B;
+                context.Pixels[index + 1] = TrackBackgroundColor.G;
+                context.Pixels[index + 2] = TrackBackgroundColor.R;
                 context.Pixels[index + 3] = 255;
             }
         }
@@ -239,5 +305,5 @@ internal class TimelineRenderer
                 brush ?? Brushes.Black,
                 dpi),
             new Point(x, y));
-    }
+    }*/
 }
