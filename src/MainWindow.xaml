@@ -5,10 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CreanexDataVis"
         mc:Ignorable="d"
-        Title="Creanex data visualization"
+        Title="Creanex Data Visualization"
         Icon="/Assets/Images/icon.png"
-        Height="300"
+        Height="292"
         Width="1200"
+        MinHeight="292"
+        MaxHeight="292"
+        MinWidth="400"
         PreviewMouseDoubleClick="Window_PreviewMouseDoubleClick">
     <Grid>
         <Label x:Name="lblPrompt"

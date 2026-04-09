@@ -27,6 +27,8 @@ public partial class MainWindow : Window
                 TimelineImage.Source = renderer.Render(records);
 
                 lblPrompt.Visibility = Visibility.Collapsed;
+
+                Title = $"Creanex Data Visualization - {System.IO.Path.GetFileName(ofd.FileName)}";
             }
         }
     }
