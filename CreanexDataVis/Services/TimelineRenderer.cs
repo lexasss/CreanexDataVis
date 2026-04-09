@@ -18,13 +18,13 @@ internal class TimelineRenderer
         int trackCount = TrackBrushes.Length;
 
         var bitmap = new RenderTargetBitmap(
-            (int)((endTime - startTime) * MsToPixel) + 20,
+            (int)((endTime - startTime) * MsToPixel) + Margin,
             trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight, // add extra space for timeline
             96, 96,
             PixelFormats.Pbgra32);
 
-        var image = DrawTracks(records);
-        bitmap.Render(image);
+        var tracks = DrawTracks(records);
+        bitmap.Render(tracks);
 
         var timeline = DrawTimeline(records, trackCount * (TrackHeight + TrackSpacing));
         bitmap.Render(timeline);
@@ -41,9 +41,10 @@ internal class TimelineRenderer
     private const double MsToPixel = 0.1;   // scale
     private const int TimeInterval = 1000;  // ms
 
+    private readonly double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
     private readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
-    private readonly Typeface TimelineFontFamily = new Typeface("Segoe UI");
-    private readonly Brush TimelineBrush = Brushes.Black;
+    private readonly Typeface FontFamily = new Typeface("Segoe UI");
+    private readonly Brush FontBrush = Brushes.Black;
     private readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
     private readonly Brush[] TrackBrushes =
     [
@@ -53,28 +54,31 @@ internal class TimelineRenderer
         new SolidColorBrush(Colors.Orange),
         new SolidColorBrush(Colors.Purple),
         new SolidColorBrush(Colors.Olive),
-        new SolidColorBrush(Colors.Green),
+        new SolidColorBrush(Colors.Turquoise),
     ];
 
     DrawingVisual DrawTracks(MappingRecord[] records)
     {
+        double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
+        int minTreeId = records.Min(r => r.GazeTargetTreeId == 0 ? int.MaxValue : r.GazeTargetTreeId);
+
         long startTime = records[0].TimeStamp;
         long endTime = records[^1].TimeStamp;
 
         int trackCount = TrackBrushes.Length;
 
-        int width = (int)((endTime - startTime) * MsToPixel) + 20;
+        int width = (int)((endTime - startTime) * MsToPixel);
+
         int[] trackStarts = new int[trackCount];
+        int[] trackStatus = new int[trackCount];
 
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
-            int[] trackOn = new int[trackCount];
-
             for (int i = 0; i < trackCount; i++)
             {
                 int y = Margin + i * (TrackHeight + TrackSpacing);
-                dc.DrawRectangle(TrackBackgroundBrush, null, new Rect(0, y, width, TrackHeight));
+                dc.DrawRectangle(TrackBackgroundBrush, null, new Rect(0, y, width + Margin, TrackHeight));
             }
 
             for (int i = 0; i < records.Length - 1; i++)
@@ -83,27 +87,47 @@ internal class TimelineRenderer
 
                 int x = (int)((r.TimeStamp - startTime) * MsToPixel);
 
-                trackOn[0] = r.DrivingStart ? 1 : (r.DrivingEnd ? 0 : trackOn[0]);
-                trackOn[1] = r.GazeLeftWindow ? 1 : 0;
-                trackOn[2] = r.GazeFrontWindow ? 1 : 0;
-                trackOn[3] = r.GazeRightWindow ? 1 : 0;
-                trackOn[4] = r.GazeTDAScreen ? 1 : 0;
-                trackOn[5] = r.GazeHarvesterHead ? 1 : 0;
-                trackOn[6] = r.GazeTargetTreeId > 0 ? 1 : 0;
+                int prevGazeTargetTreeId = trackStatus[6];
 
-                for (int j = 0; j < trackOn.Length; j++)
+                trackStatus[0] = r.DrivingStart ? 1 : (r.DrivingEnd ? 0 : trackStatus[0]);
+                trackStatus[1] = r.GazeLeftWindow ? 1 : 0;
+                trackStatus[2] = r.GazeFrontWindow ? 1 : 0;
+                trackStatus[3] = r.GazeRightWindow ? 1 : 0;
+                trackStatus[4] = r.GazeTDAScreen ? 1 : 0;
+                trackStatus[5] = r.GazeHarvesterHead ? 1 : 0;
+                trackStatus[6] = r.GazeTargetTreeId > 0 ? r.GazeTargetTreeId : 0;
+
+                for (int j = 0; j < trackStarts.Length; j++)
                 {
-                    if (trackOn[j] > 0 && trackStarts[j] == 0)
+                    if (trackStatus[j] > 0 && trackStarts[j] == 0)
                     {
                         trackStarts[j] = x;
                     }
-                    else if (trackOn[j] == 0 && trackStarts[j] > 0)
+                    else 
                     {
+                        bool finalizeTrack = trackStatus[j] == 0 && trackStarts[j] > 0;
+
                         int y = Margin + j * (TrackHeight + TrackSpacing);
 
-                        dc.DrawRectangle(TrackBrushes[j], null, new Rect(trackStarts[j], y, x - trackStarts[j], TrackHeight));
+                        if (finalizeTrack)
+                            dc.DrawRectangle(TrackBrushes[j], null, new Rect(trackStarts[j], y, x - trackStarts[j], TrackHeight));
 
-                        trackStarts[j] = 0;
+                        if (j == 6 && prevGazeTargetTreeId != trackStatus[j] && prevGazeTargetTreeId > 0)
+                        {
+                            dc.DrawText(
+                                new FormattedText(
+                                    (prevGazeTargetTreeId - minTreeId).ToString(),
+                                    System.Globalization.CultureInfo.InvariantCulture,
+                                    FlowDirection.LeftToRight,
+                                    FontFamily,
+                                    TreeIdFontSize,
+                                    FontBrush,
+                                    dpi),
+                                new Point(trackStarts[j], y + 3));
+                        }
+
+                        if (finalizeTrack)
+                            trackStarts[j] = 0;
                     }
                 }
 
@@ -117,13 +141,12 @@ internal class TimelineRenderer
             }
 
             // Finalize ongoing tracks
-            int xEnd = (int)((endTime - startTime) * MsToPixel);
-            for (int j = 0; j < trackOn.Length; j++)
+            for (int j = 0; j < trackStarts.Length; j++)
             {
                 if (trackStarts[j] > 0)
                 {
                     int y = Margin + j * (TrackHeight + TrackSpacing);
-                    dc.DrawRectangle(TrackBrushes[j], null, new Rect(trackStarts[j], y, xEnd - trackStarts[j], TrackHeight));
+                    dc.DrawRectangle(TrackBrushes[j], null, new Rect(trackStarts[j], y, width - trackStarts[j], TrackHeight));
                 }
             }
         }
@@ -136,7 +159,6 @@ internal class TimelineRenderer
         double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
         
         var dv = new DrawingVisual();
-
         using (var dc = dv.RenderOpen())
         {
             long startTime = records[0].TimeStamp;
@@ -153,12 +175,12 @@ internal class TimelineRenderer
 
                 dc.DrawText(
                     new FormattedText(
-                        (t / 1000).ToString("N1"),
+                        TimeSpan.FromMilliseconds(t).ToString("g"),
                         System.Globalization.CultureInfo.InvariantCulture,
                         FlowDirection.LeftToRight,
-                        TimelineFontFamily,
+                        FontFamily,
                         TimelineFontSize,
-                        TimelineBrush,
+                        FontBrush,
                         dpi),
                     new Point(x, y));
             }
