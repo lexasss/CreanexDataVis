@@ -23,30 +23,39 @@ internal class TimelineRenderer
             96, 96,
             PixelFormats.Pbgra32);
 
-        var tracks = DrawTracks(records);
+        var tracks = DrawTracks(records, out var eventsRange);
         bitmap.Render(tracks);
 
         var timeline = DrawTimeline(records, trackCount * (TrackHeight + TrackSpacing));
         bitmap.Render(timeline);
 
-        return bitmap;
+        // Clip the bitmap to the range of events, with some padding (1000 ms) on each side
+
+        eventsRange = eventsRange with {
+            Start = Math.Max(startTime, eventsRange.Start - 1000),
+            End = Math.Min(endTime, eventsRange.End + 1000)
+        };
+
+        return Clip(bitmap, startTime, eventsRange);
     }
 
     // Internal
 
-    private const int TrackHeight = 20;     // pixels
-    private const int TrackSpacing = 10;    // pixels
-    private const int DotSize = 15;         // pixels
-    private const int Margin = 5;           // pixels
-    private const double MsToPixel = 0.1;   // scale
-    private const int TimeInterval = 1000;  // ms
+    record class Range(long Start, long End);
 
-    private readonly double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
-    private readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
-    private readonly Typeface FontFamily = new Typeface("Segoe UI");
-    private readonly Brush FontBrush = Brushes.Black;
-    private readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
-    private readonly Brush[] TrackBrushes =
+    const int TrackHeight = 20;     // pixels
+    const int TrackSpacing = 10;    // pixels
+    const int DotSize = 15;         // pixels
+    const int Margin = 5;           // pixels
+    const double MsToPixel = 0.1;   // scale
+    const int TimeInterval = 1000;  // ms
+
+    readonly double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
+    readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
+    readonly Typeface FontFamily = new("Segoe UI");
+    readonly Brush FontBrush = Brushes.Black;
+    readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
+    readonly Brush[] TrackBrushes =
     [
         new SolidColorBrush(Colors.Gold),
         new SolidColorBrush(Colors.DarkRed),
@@ -57,7 +66,7 @@ internal class TimelineRenderer
         new SolidColorBrush(Colors.Turquoise),
     ];
 
-    DrawingVisual DrawTracks(MappingRecord[] records)
+    DrawingVisual DrawTracks(MappingRecord[] records, out Range timeRange)
     {
         double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
         int minTreeId = records.Min(r => r.GazeTargetTreeId == 0 ? int.MaxValue : r.GazeTargetTreeId);
@@ -65,7 +74,11 @@ internal class TimelineRenderer
         long startTime = records[0].TimeStamp;
         long endTime = records[^1].TimeStamp;
 
+        long earliestEventTime = -1;
+        long latestEventTime = startTime;
+
         int trackCount = TrackBrushes.Length;
+        double dotRadius = 0.5 * DotSize;
 
         int width = (int)((endTime - startTime) * MsToPixel);
 
@@ -81,7 +94,7 @@ internal class TimelineRenderer
                 dc.DrawRectangle(TrackBackgroundBrush, null, new Rect(0, y, width + Margin, TrackHeight));
             }
 
-            for (int i = 0; i < records.Length - 1; i++)
+            for (int i = 0; i < records.Length; i++)
             {
                 var r = records[i];
 
@@ -96,6 +109,12 @@ internal class TimelineRenderer
                 trackStatus[4] = r.GazeTDAScreen ? 1 : 0;
                 trackStatus[5] = r.GazeHarvesterHead ? 1 : 0;
                 trackStatus[6] = r.GazeTargetTreeId > 0 ? r.GazeTargetTreeId : 0;
+
+                latestEventTime = trackStatus.Any(s => s > 0) ? r.TimeStamp : latestEventTime;
+                if (earliestEventTime < 0)
+                {
+                    earliestEventTime = trackStatus.Any(s => s > 0) ? r.TimeStamp : earliestEventTime;
+                }
 
                 for (int j = 0; j < trackStarts.Length; j++)
                 {
@@ -135,9 +154,9 @@ internal class TimelineRenderer
                 int dotY = Margin + TrackHeight / 2;
 
                 if (r.GrabTargetTreeId > 0)
-                    dc.DrawEllipse(new SolidColorBrush(Colors.Green), null, new Point(x, dotY), DotSize/2, DotSize/2);
+                    dc.DrawEllipse(new SolidColorBrush(Colors.Green), null, new Point(x, dotY), dotRadius, dotRadius);
                 if (r.GrabNonTargetTreeId > 0)
-                    dc.DrawEllipse(new SolidColorBrush(Colors.Red), null, new Point(x, dotY), DotSize / 2, DotSize / 2);
+                    dc.DrawEllipse(new SolidColorBrush(Colors.Red), null, new Point(x, dotY), dotRadius, dotRadius);
             }
 
             // Finalize ongoing tracks
@@ -151,6 +170,7 @@ internal class TimelineRenderer
             }
         }
 
+        timeRange = new Range(earliestEventTime, latestEventTime);
         return dv;
     }
 
@@ -187,5 +207,22 @@ internal class TimelineRenderer
         }
 
         return dv;
+    }
+
+    private static BitmapSource Clip(RenderTargetBitmap bitmap, long startTime, Range timeRange)
+    {
+        var clippedStartX = (int)((timeRange.Start - startTime) * MsToPixel);
+        var clippedEndX = (int)((timeRange.End - startTime) * MsToPixel);
+        var clippedWidth = clippedEndX - clippedStartX + Margin;
+        var stride = clippedWidth * 4;
+        var pixels = new byte[stride * bitmap.PixelHeight];
+
+        bitmap.CopyPixels(new Int32Rect(clippedStartX, 0, clippedWidth, bitmap.PixelHeight),
+            pixels, stride, 0);
+
+        return BitmapSource.Create(clippedWidth, bitmap.PixelHeight,
+            96, 96,
+            PixelFormats.Pbgra32,
+            null, pixels, stride);
     }
 }
