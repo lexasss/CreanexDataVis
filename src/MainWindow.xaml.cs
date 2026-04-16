@@ -24,7 +24,9 @@ public partial class MainWindow : Window
             if (records != null)
             {
                 var renderer = new Services.TimelineRenderer();
-                TimelineImage.Source = renderer.Render(records);
+                //TimelineImage.Source = renderer.Render(records);
+                Services.TimelineRenderer.VisualHost? host = renderer.GetVisualHost(records);
+                scvTimeline.Content = host;
 
                 lblPrompt.Visibility = Visibility.Collapsed;
 

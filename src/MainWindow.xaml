@@ -20,10 +20,11 @@
                VerticalAlignment="Center"
                FontSize="16"
                Foreground="Gray"/>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+        <ScrollViewer x:Name="scvTimeline"
+                      HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
                       VerticalAlignment="Top">
-            <Image x:Name="TimelineImage"/>
+            <!--Image x:Name="imgTimeline"/-->
         </ScrollViewer>
         <StackPanel>
             <StackPanel.Resources>

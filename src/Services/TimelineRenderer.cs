@@ -7,6 +7,25 @@ namespace CreanexDataVis.Services;
 
 internal class TimelineRenderer
 {
+    internal class VisualHost : FrameworkElement
+    {
+        public VisualHost(DrawingVisual[] visuals)
+        {
+            _children = new VisualCollection(this);
+            foreach (var visual in visuals)
+                _children.Add(visual);
+        }
+
+        protected override int VisualChildrenCount => _children.Count;
+
+        protected override Visual GetVisualChild(int index)
+        {
+            return _children[index];
+        }
+
+        private readonly VisualCollection _children;
+    }
+
     public ImageSource? Render(MappingRecord[] records)
     {
         if (records.Length == 0)
@@ -37,6 +56,34 @@ internal class TimelineRenderer
         };
 
         return Clip(bitmap, startTime, eventsRange);
+    }
+
+    public VisualHost? GetVisualHost(MappingRecord[] records)
+    {
+        if (records.Length == 0)
+            return null;
+
+        int trackCount = TrackBrushes.Length;
+
+        var tracks = DrawTracks(records, out var eventsRange);
+
+        var timeline = DrawTimeline(records, trackCount * (TrackHeight + TrackSpacing));
+
+        // Clip the bitmap to the range of events, with some padding (1000 ms)
+
+        long startTime = records[0].TimeStamp;
+        long duration = records[^1].TimeStamp - startTime;
+        long blankPeriodBefore = Math.Max(0, eventsRange.Start - startTime - 1000);
+        long blankPeriodAfter = Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000);
+
+        var host = new VisualHost([tracks, timeline])
+        {
+            RenderTransform = new TranslateTransform(-(blankPeriodBefore + blankPeriodAfter) * MsToPixel, 0),
+            Width = (duration - blankPeriodBefore - blankPeriodAfter) * MsToPixel + Margin,
+            Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
+        };
+
+        return host;
     }
 
     // Internal
