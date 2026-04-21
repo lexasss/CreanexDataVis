@@ -28,7 +28,7 @@ internal class TimelineRenderer
 
     public bool CropBlankPeriods { get; set; } = true;
 
-    public ImageSource? Render(MappingRecord[] records)
+    public ImageSource? Render(TimelineRecord[] records)
     {
         if (records.Length == 0)
             return null;
@@ -60,7 +60,7 @@ internal class TimelineRenderer
         return Clip(bitmap, startTime, eventsRange);
     }
 
-    public VisualHost? GetVisualHost(MappingRecord[] records)
+    public VisualHost? GetVisualHost(TimelineRecord[] records)
     {
         if (records.Length == 0)
             return null;
@@ -104,7 +104,7 @@ internal class TimelineRenderer
     readonly Typeface FontFamily = new("Segoe UI");
     readonly Brush FontBrush = Brushes.Black;
     readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
-    readonly Brush TrackBrushDrivingBackward = Brushes.Red;
+    readonly Brush TrackDrivingBackwardBrush = Brushes.Red;
     readonly Brush[] TrackBrushes =
     [
         Brushes.Green,
@@ -116,7 +116,7 @@ internal class TimelineRenderer
         Brushes.Turquoise,
     ];
 
-    DrawingVisual DrawTracks(MappingRecord[] records, out Range timeRange)
+    DrawingVisual DrawTracks(TimelineRecord[] records, out Range timeRange)
     {
         double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
         int minTreeId = records.Min(r => r.GazeTargetTreeId == 0 ? int.MaxValue : r.GazeTargetTreeId);
@@ -185,7 +185,7 @@ internal class TimelineRenderer
                             var brush = TrackBrushes[j];
                             if (j == 0 && wasDrivingBackward)   // change the brush when driving backward
                             {
-                                brush = TrackBrushDrivingBackward;
+                                brush = TrackDrivingBackwardBrush;
                             }
 
                             dc.DrawRectangle(brush, null, new Rect(trackStarts[j], y, x - trackStarts[j], TrackHeight));
@@ -235,7 +235,7 @@ internal class TimelineRenderer
         return dv;
     }
 
-    DrawingVisual DrawTimeline(MappingRecord[] records, int y)
+    DrawingVisual DrawTimeline(TimelineRecord[] records, int y)
     {
         double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
         

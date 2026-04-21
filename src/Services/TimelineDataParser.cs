@@ -4,11 +4,11 @@ using System.IO;
 
 namespace CreanexDataVis.Services;
 
-internal static class DataParser
+internal static class TimelineDataParser
 {
-    public static MappingRecord[]? Parse(string filePath)
+    public static TimelineRecord[]? Parse(string filePath)
     {
-        var result = new List<MappingRecord>();
+        var result = new List<TimelineRecord>();
 
         try
         {
@@ -23,7 +23,7 @@ internal static class DataParser
                 if (parts == null || parts.Length < 11)
                     continue; // skip malformed lines
 
-                var record = new MappingRecord
+                var record = new TimelineRecord
                 {
                     TimeStamp = long.Parse(parts[0], CultureInfo.InvariantCulture),
                     GazeLeftWindow = parts[1] == "1",

@@ -1,0 +1,55 @@
+﻿namespace CreanexDataVis.Models;
+
+internal class VarjoRecord
+{
+    public long Timestamp;
+    public long FrameNumber;
+    public long CaptureTime;
+    public double HMDPositionX;
+    public double HMDPositionY;
+    public double HMDPositionZ;
+    public double HMDEulerX;
+    public double HMDEulerY;
+    public double HMDEulerZ;
+    public double HMDForwardX;
+    public double HMDForwardY;
+    public double HMDForwardZ;
+    public GazeStatus GazeStatus;
+    public double GazeOriginX;
+    public double GazeOriginY;
+    public double GazeOriginZ;
+    public double GazeForwardX;
+    public double GazeForwardY;
+    public double GazeForwardZ;
+    public double GazeOriginXWorld;
+    public double GazeOriginYWorld;
+    public double GazeOriginZWorld;
+    public double GazeForwardXWorld;
+    public double GazeForwardYWorld;
+    public double GazeForwardZWorld;
+    public double GazeFocusDistance;
+    public double GazeFocusStability;
+    public GazeStatus GazeLeftStatus;
+    public double GazeLeftOriginX;
+    public double GazeLeftOriginY;
+    public double GazeLeftOriginZ;
+    public double GazeLeftForwardX;
+    public double GazeLeftForwardY;
+    public double GazeLeftForwardZ;
+    public GazeStatus GazeRightStatus;
+    public double GazeRightOriginX;
+    public double GazeRightOriginY;
+    public double GazeRightOriginZ;
+    public double GazeRightForwardX;
+    public double GazeRightForwardY;
+    public double GazeRightForwardZ;
+    public double InterpupillaryDistance;
+    public double LeftIrisDiameterRatio;
+    public double LeftPupilDiameter;
+    public double LeftIrisDiameter;
+    public double LeftEyeOpenness;
+    public double RightIrisDiameterRatio;
+    public double RightPupilDiameter;
+    public double RightIrisDiameter;
+    public double RightEyeOpenness;
+}

@@ -1,6 +1,6 @@
 ﻿namespace CreanexDataVis.Models;
 
-internal class MappingRecord
+internal class TimelineRecord
 {
     public long TimeStamp;
     public bool GazeLeftWindow;
