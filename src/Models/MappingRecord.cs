@@ -11,6 +11,6 @@ internal class MappingRecord
     public int GazeTargetTreeId;
     public int GrabTargetTreeId;
     public int GrabNonTargetTreeId;
-    public bool DrivingStart;
-    public bool DrivingEnd;
+    public int DrivingStart;
+    public int DrivingEnd;
 }

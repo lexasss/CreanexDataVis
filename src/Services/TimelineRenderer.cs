@@ -7,7 +7,7 @@ namespace CreanexDataVis.Services;
 
 internal class TimelineRenderer
 {
-    internal class VisualHost : FrameworkElement
+    public class VisualHost : FrameworkElement
     {
         public VisualHost(DrawingVisual[] visuals)
         {
@@ -25,6 +25,8 @@ internal class TimelineRenderer
 
         private readonly VisualCollection _children;
     }
+
+    public bool CropBlankPeriods { get; set; } = true;
 
     public ImageSource? Render(MappingRecord[] records)
     {
@@ -73,8 +75,8 @@ internal class TimelineRenderer
 
         long startTime = records[0].TimeStamp;
         long duration = records[^1].TimeStamp - startTime;
-        long blankPeriodBefore = Math.Max(0, eventsRange.Start - startTime - 1000);
-        long blankPeriodAfter = Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000);
+        long blankPeriodBefore = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
+        long blankPeriodAfter = CropBlankPeriods ? Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000) : 0;
 
         var host = new VisualHost([tracks, timeline])
         {
@@ -102,15 +104,16 @@ internal class TimelineRenderer
     readonly Typeface FontFamily = new("Segoe UI");
     readonly Brush FontBrush = Brushes.Black;
     readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
+    readonly Brush TrackBrushDrivingBackward = Brushes.Red;
     readonly Brush[] TrackBrushes =
     [
-        new SolidColorBrush(Colors.Gold),
-        new SolidColorBrush(Colors.DarkRed),
-        new SolidColorBrush(Colors.Blue),
-        new SolidColorBrush(Colors.Orange),
-        new SolidColorBrush(Colors.Purple),
-        new SolidColorBrush(Colors.Olive),
-        new SolidColorBrush(Colors.Turquoise),
+        Brushes.Green,
+        Brushes.DarkRed,
+        Brushes.Blue,
+        Brushes.Orange,
+        Brushes.Purple,
+        Brushes.Olive,
+        Brushes.Turquoise,
     ];
 
     DrawingVisual DrawTracks(MappingRecord[] records, out Range timeRange)
@@ -149,7 +152,7 @@ internal class TimelineRenderer
 
                 int prevGazeTargetTreeId = trackStatus[6];
 
-                trackStatus[0] = r.DrivingStart ? 1 : (r.DrivingEnd ? 0 : trackStatus[0]);
+                trackStatus[0] = r.DrivingStart != 0 ? r.DrivingStart : (r.DrivingEnd != 0 ? 0 : trackStatus[0]);
                 trackStatus[1] = r.GazeLeftWindow ? 1 : 0;
                 trackStatus[2] = r.GazeFrontWindow ? 1 : 0;
                 trackStatus[3] = r.GazeRightWindow ? 1 : 0;
@@ -157,15 +160,17 @@ internal class TimelineRenderer
                 trackStatus[5] = r.GazeHarvesterHead ? 1 : 0;
                 trackStatus[6] = r.GazeTargetTreeId > 0 ? r.GazeTargetTreeId : 0;
 
-                latestEventTime = trackStatus.Any(s => s > 0) ? r.TimeStamp : latestEventTime;
+                bool wasDrivingBackward = r.DrivingEnd > 0; // weird decision to use 1 for backward and -1 for forward
+
+                latestEventTime = trackStatus.Any(s => s != 0) ? r.TimeStamp : latestEventTime;
                 if (earliestEventTime < 0)
                 {
-                    earliestEventTime = trackStatus.Any(s => s > 0) ? r.TimeStamp : earliestEventTime;
+                    earliestEventTime = trackStatus.Any(s => s != 0) ? r.TimeStamp : earliestEventTime;
                 }
 
                 for (int j = 0; j < trackStarts.Length; j++)
                 {
-                    if (trackStatus[j] > 0 && trackStarts[j] == 0)
+                    if (trackStatus[j] != 0 && trackStarts[j] == 0)
                     {
                         trackStarts[j] = x;
                     }
@@ -176,8 +181,17 @@ internal class TimelineRenderer
                         int y = Margin + j * (TrackHeight + TrackSpacing);
 
                         if (finalizeTrack)
-                            dc.DrawRectangle(TrackBrushes[j], null, new Rect(trackStarts[j], y, x - trackStarts[j], TrackHeight));
+                        {
+                            var brush = TrackBrushes[j];
+                            if (j == 0 && wasDrivingBackward)   // change the brush when driving backward
+                            {
+                                brush = TrackBrushDrivingBackward;
+                            }
 
+                            dc.DrawRectangle(brush, null, new Rect(trackStarts[j], y, x - trackStarts[j], TrackHeight));
+                        }
+
+                        // For gaze target tree ID track, also print the tree ID above the track when it changes
                         if (j == 6 && prevGazeTargetTreeId != trackStatus[j] && prevGazeTargetTreeId > 0)
                         {
                             dc.DrawText(
