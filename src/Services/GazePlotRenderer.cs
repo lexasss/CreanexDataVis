@@ -30,33 +30,21 @@ internal class GazePlotRenderer
         PathPen.Freeze();
     }
 
-    public VisualHost? GetVisualHost(VarjoRecord[] records)
+    public FrameworkElement? Create(VarjoRecord[] records)
     {
         if (records.Length == 0)
             return null;
 
         var path = DrawPath(records, out Range boundingBox);
 
-        /*
-        var rtb = new RenderTargetBitmap(
-            width,
-            height,
-            96, 96,
-            PixelFormats.Pbgra32);
-
-        rtb.Render(dv);
-        rtb.Freeze();
-
-         */
         var host = new VisualHost([path])
         {
             RenderTransform = new TranslateTransform(Margin, Margin),
             Width = 2 * Margin + 2 * MsToPixel,
-            Height = 2 * Margin + 2 * MsToPixel
+            Height = 2 * Margin + 2 * MsToPixel,
+            VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Left
         };
-
-        host.VerticalAlignment = VerticalAlignment.Top;
-        host.HorizontalAlignment = HorizontalAlignment.Left;
 
         return host;
     }

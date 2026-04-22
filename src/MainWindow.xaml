@@ -4,35 +4,49 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CreanexDataVis"
+        xmlns:srv="clr-namespace:CreanexDataVis.Services"
         xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         mc:Ignorable="d"
         Title="{Binding Title}"
         Icon="/Assets/Images/icon.png"
-        Height="322"
+        Height="722"
         Width="1200"
         MinHeight="322"
         MinWidth="400">
-    <Window.DataContext>
-        <vm:MainViewVM/>
-    </Window.DataContext>
+
     <TabControl>
         <TabItem Header="Gazing timeline">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <ToolBar Grid.Row="0">
-                    <Button Content="Load..." Command="{Binding LoadCreanexDataCommand}"/>
-                    <!--Separator/>
-                    <Button Content="▶" Click=""/-->
+                <ToolBarTray Grid.Row="0">
+                    <ToolBar>
+                        <Label Content="Data:"/>
+                        <Button Content="📂" Command="{Binding LoadCreanexDataCommand}"/>
+                    </ToolBar>
+                    <ToolBar>
+                        <Label Content="Video:"/>
+                        <Button Content="📂" Command="{Binding LoadVideoCommand}"/>
+                        <Label Content="Delaying"/>
+                        <TextBox Width="40" Text="{Binding VideoDelay}"/>
+                        <Label Content="seconds"/>
+                        <Separator/>
+                        <Button Content="▶" Command="{Binding PlayTimelineCommand}" IsEnabled="{Binding CanPlay}"/>
+                        <Button Content="⏸" Command="{Binding StopTimelinePlaybackCommand}" IsEnabled="{Binding CanStop}"/>
+                    </ToolBar>
+                </ToolBarTray>
 
-                </ToolBar>
                 <ScrollViewer Grid.Row="1"
                               Content="{Binding Timeline}"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto"
-                              VerticalAlignment="Top">
+                              VerticalAlignment="Top"
+                              srv:ScrollViewerBinding.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
+                              srv:ScrollViewerBinding.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
+                              srv:ScrollViewerBinding.EnableViewportWidthBinding="True">
                     <!--Image x:Name="imgTimeline"/-->
                 </ScrollViewer>
                 <StackPanel Grid.Row="1">
@@ -50,6 +64,11 @@
                     <Label>Harvester Head</Label>
                     <Label>Target Tree</Label>
                 </StackPanel>
+
+                <MediaElement x:Name="VideoPlayer" Grid.Row="2"
+                              Source="{Binding VideoSource}"
+                              LoadedBehavior="Manual"
+                              UnloadedBehavior="Stop"/>
             </Grid>
         </TabItem>
         <TabItem Header="Gaze point">
@@ -59,7 +78,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <ToolBar Grid.Row="0">
-                    <Button Content="Load..." Command="{Binding LoadVarjoDataCommand}"/>
+                    <Label Content="Data:"/>
+                    <Button Content="📂" Command="{Binding LoadVarjoDataCommand}"/>
                 </ToolBar>
                 <ScrollViewer Grid.Row="1"
                               Content="{Binding GazePlot}"

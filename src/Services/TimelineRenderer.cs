@@ -1,5 +1,6 @@
 ﻿using CreanexDataVis.Models;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -26,7 +27,11 @@ internal class TimelineRenderer
         private readonly VisualCollection _children;
     }
 
+    public const double MsToPixel = 0.1;
+
     public bool CropBlankPeriods { get; set; } = true;
+
+    public double StartTime { get; private set; } = 0;
 
     public ImageSource? Render(TimelineRecord[] records)
     {
@@ -60,7 +65,7 @@ internal class TimelineRenderer
         return Clip(bitmap, startTime, eventsRange);
     }
 
-    public VisualHost? GetVisualHost(TimelineRecord[] records)
+    public Canvas? Create(TimelineRecord[] records)
     {
         if (records.Length == 0)
             return null;
@@ -75,17 +80,41 @@ internal class TimelineRenderer
 
         long startTime = records[0].TimeStamp;
         long duration = records[^1].TimeStamp - startTime;
-        long blankPeriodBefore = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
+        StartTime = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
         long blankPeriodAfter = CropBlankPeriods ? Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000) : 0;
 
         var host = new VisualHost([tracks, timeline])
         {
-            RenderTransform = new TranslateTransform(-(blankPeriodBefore + blankPeriodAfter) * MsToPixel, 0),
-            Width = (duration - blankPeriodBefore - blankPeriodAfter) * MsToPixel + Margin,
+            RenderTransform = new TranslateTransform(-(StartTime + blankPeriodAfter) * MsToPixel, 0),
+            Width = (duration - StartTime - blankPeriodAfter) * MsToPixel + Margin,
             Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
         };
 
-        return host;
+        var timeMarker = new System.Windows.Shapes.Line
+        {
+            X1 = Margin,
+            Y1 = 0,
+            X2 = Margin,
+            Y2 = host.Height,
+            Stroke = Brushes.Red,
+            StrokeThickness = 1
+        };
+
+        var transparent = new Label
+        {
+            Width = host.Width,
+            Height = host.Height,
+            Background = Brushes.Transparent
+        };
+
+        var canvas = new Canvas
+        {
+            Width = host.Width,
+            Height = host.Height,
+            Children = { host, timeMarker, transparent }
+        };
+
+        return canvas;
     }
 
     // Internal
@@ -96,7 +125,6 @@ internal class TimelineRenderer
     const int TrackSpacing = 10;    // pixels
     const int DotSize = 15;         // pixels
     const int Margin = 5;           // pixels
-    const double MsToPixel = 0.1;   // scale
     const int TimeInterval = 1000;  // ms
 
     readonly double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
@@ -254,9 +282,11 @@ internal class TimelineRenderer
 
                 int x = (int)(t * MsToPixel);
 
+                var timespan = TimeSpan.FromMilliseconds(t);
+
                 dc.DrawText(
                     new FormattedText(
-                        TimeSpan.FromMilliseconds(t).ToString("g"),
+                        $"{timespan.Minutes:D2}:{timespan.Seconds:D2}",
                         System.Globalization.CultureInfo.InvariantCulture,
                         FlowDirection.LeftToRight,
                         FontFamily,
