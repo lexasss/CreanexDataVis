@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Threading;
 
 namespace CreanexDataVis.ViewModels;
 
@@ -28,53 +27,48 @@ internal partial class MainViewVM : ObservableObject
     public partial double PlaybackTime { get; set; } = 0;   // seconds
 
     [ObservableProperty]
-    public partial bool CanPlay { get; set; } = false;
-    [ObservableProperty]
-    public partial bool CanStop { get; set; } = false;
+    public partial bool IsPlaybackEnabled { get; set; } = false;
 
     [ObservableProperty]
     public partial double TimelineScrollX { get; set; }
+
     [ObservableProperty]
     public partial double TimelineWidth { get; set; }
+
+    [ObservableProperty]
+    public partial string PlayVideoCommandLabel { get; set; } = VideoCommandPlayLabel;
 
     public MainViewVM(Services.IMediaPlayerService mediaPlayerService)
     {
         _mediaPlayerService = mediaPlayerService;
-        _timer = new DispatcherTimer
+        _mediaPlayerService.OnProgressChanged += (s, e) =>
         {
-            Interval = TimeSpan.FromSeconds(TimeStep)
-        };
+            PlaybackTime = e + VideoDelay;
 
-        _timer.Tick += (_, _) =>
+            var x = PlaybackTime * 1000 * Services.TimelineRenderer.MsToPixel;
+            if (TimelineScrollX < x - 0.8 * TimelineWidth)
+            {
+                TimelineScrollX = x - 0.8 * TimelineWidth;
+            }
+            else if (TimelineScrollX > x - 0.05 * TimelineWidth)
+            {
+                TimelineScrollX = x - 0.05 * TimelineWidth;
+            }
+        };
+        _mediaPlayerService.OnStopped += (s, e) =>
         {
-            PlaybackTime += TimeStep;
-            if (PlaybackTime >= _duration)
-            {
-                _timer.Stop();
-                PlaybackTime = 0;
-            }
-            else
-            {
-                var x = PlaybackTime * 1000 * Services.TimelineRenderer.MsToPixel;
-                if (TimelineScrollX < x - 0.9 * TimelineWidth)
-                {
-                    TimelineScrollX = x - 0.9 * TimelineWidth;
-                }
-            }
+            PlaybackTime = 0;
+            PlayVideoCommandLabel = VideoCommandPlayLabel;
         };
     }
 
     // Internal
 
-    const double TimeStep = 0.05; // seconds
-
     readonly static string MainTitle = "Creanex Data Visualization";
+    readonly static string VideoCommandPlayLabel = "▶";
+    readonly static string VideoCommandPauseLabel = "⏸";
 
     readonly Services.IMediaPlayerService _mediaPlayerService;
-    readonly DispatcherTimer _timer;
-
-    double _duration = 0; // seconds
-    double _timelineStartTime = 0; // seconds
 
     [RelayCommand]
     private void LoadCreanexData()
@@ -91,19 +85,13 @@ internal partial class MainViewVM : ObservableObject
             {
                 var renderer = new Services.TimelineRenderer();
                 var canvas = renderer.Create(records);
-                if (canvas != null)
-                {
-                    _timelineStartTime = renderer.StartTime / 1000.0; // convert to seconds
-                    _duration = canvas.Width / Services.TimelineRenderer.MsToPixel / 1000.0;
-                }
 
                 Timeline = canvas;
-                CanPlay = true;
                 Title = $"{MainTitle} - {System.IO.Path.GetFileName(ofd.FileName)}";
 
                 if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Line timeMark)
                 {
-                    var xBinding = new Binding("PlaybackTime")
+                    var xBinding = new Binding(nameof(PlaybackTime))
                     {
                         Source = this,
                         Mode = BindingMode.OneWay,
@@ -158,31 +146,25 @@ internal partial class MainViewVM : ObservableObject
         if (ofd.ShowDialog() == true)
         {
             VideoSource = new Uri(ofd.FileName);
+            IsPlaybackEnabled = true;
         }
     }
 
     [RelayCommand]
-    private void PlayTimeline()
+    private void PlayVideo()
     {
-        _timer.Start();
-        if (VideoSource != null)
+        if (VideoSource == null)
+            return;
+
+        if (_mediaPlayerService.IsPlaying)
         {
-            var videoStartTime = TimeSpan.FromSeconds(_timelineStartTime + VideoDelay);
-            if (PlaybackTime >= videoStartTime.TotalSeconds)
-            {
-                _mediaPlayerService.Play(PlaybackTime - videoStartTime.TotalSeconds);
-            }
+            _mediaPlayerService.Pause();
+            PlayVideoCommandLabel = VideoCommandPlayLabel;
         }
-        CanPlay = false;
-        CanStop = true;
-    }
-
-    [RelayCommand]
-    private void StopTimelinePlayback()
-    {
-        _timer.Stop();
-        _mediaPlayerService.Stop();
-        CanPlay = true;
-        CanStop = false;
+        else
+        {
+            _mediaPlayerService.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
+            PlayVideoCommandLabel = VideoCommandPauseLabel;
+        }
     }
 }

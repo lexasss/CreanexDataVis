@@ -34,8 +34,9 @@
                         <TextBox Width="40" Text="{Binding VideoDelay}"/>
                         <Label Content="seconds"/>
                         <Separator/>
-                        <Button Content="▶" Command="{Binding PlayTimelineCommand}" IsEnabled="{Binding CanPlay}"/>
-                        <Button Content="⏸" Command="{Binding StopTimelinePlaybackCommand}" IsEnabled="{Binding CanStop}"/>
+                        <Button Content="{Binding PlayVideoCommandLabel}"
+                                Command="{Binding PlayVideoCommand}"
+                                IsEnabled="{Binding IsPlaybackEnabled}"/>
                     </ToolBar>
                 </ToolBarTray>
 

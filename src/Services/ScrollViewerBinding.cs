@@ -25,14 +25,16 @@ public static class ScrollViewerBinding
         if (d is ScrollViewer sv)
         {
             sv.ScrollToHorizontalOffset((double)e.NewValue);
+            sv.ScrollChanged -= ScrollChanged;
+            sv.ScrollChanged += ScrollChanged;
         }
     }
-    /*
+
     private static void ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         var sv = (ScrollViewer)sender;
         SetHorizontalOffset(sv, sv.HorizontalOffset);
-    }*/
+    }
 
 
     public static readonly DependencyProperty BindableViewportWidthProperty =

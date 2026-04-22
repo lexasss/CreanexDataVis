@@ -10,8 +10,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        var mediaService = new MediaPlayerService();
-        mediaService.SetMediaElement(VideoPlayer);
+        var mediaService = new MediaPlayerService(VideoPlayer);
 
         DataContext = new MainViewVM(mediaService);
     }

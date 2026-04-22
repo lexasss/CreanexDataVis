@@ -31,8 +31,6 @@ internal class TimelineRenderer
 
     public bool CropBlankPeriods { get; set; } = true;
 
-    public double StartTime { get; private set; } = 0;
-
     public ImageSource? Render(TimelineRecord[] records)
     {
         if (records.Length == 0)
@@ -80,13 +78,13 @@ internal class TimelineRenderer
 
         long startTime = records[0].TimeStamp;
         long duration = records[^1].TimeStamp - startTime;
-        StartTime = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
+        long blankPeriodBefore = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
         long blankPeriodAfter = CropBlankPeriods ? Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000) : 0;
 
         var host = new VisualHost([tracks, timeline])
         {
-            RenderTransform = new TranslateTransform(-(StartTime + blankPeriodAfter) * MsToPixel, 0),
-            Width = (duration - StartTime - blankPeriodAfter) * MsToPixel + Margin,
+            RenderTransform = new TranslateTransform(-(blankPeriodBefore + blankPeriodAfter) * MsToPixel, 0),
+            Width = (duration - blankPeriodBefore - blankPeriodAfter) * MsToPixel + Margin,
             Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
         };
 
