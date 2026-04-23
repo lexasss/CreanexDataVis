@@ -41,31 +41,29 @@ public class MediaPlayerService : IMediaPlayerService
 
     public void Load(Uri source)
     {
-        if (_mediaElement != null)
-            _mediaElement.Source = source;
+        _mediaElement.Source = source;
+        _mediaElement.MediaOpened += OnMediaOpened;
+        _mediaElement.Play();
     }
 
     public void Play(double fromTime)
     {
-        if (_mediaElement != null)
-        {
-            _mediaElement.Position = TimeSpan.FromSeconds(fromTime);
-            _mediaElement.Play();
-            _timer.Start();
-            IsPlaying = true;
-        }
+        _mediaElement.Position = TimeSpan.FromSeconds(fromTime);
+        _mediaElement.Play();
+        _timer.Start();
+        IsPlaying = true;
     }
 
     public void Pause()
     {
-        _mediaElement?.Pause();
+        _mediaElement.Pause();
         _timer.Stop();
         IsPlaying = false;
     }
 
     public void Stop()
     {
-        _mediaElement?.Stop();
+        _mediaElement.Stop();
         _timer.Stop();
         IsPlaying = false;
     }
@@ -74,7 +72,7 @@ public class MediaPlayerService : IMediaPlayerService
 
     const double TimeStep = 0.05; // seconds
 
-    readonly MediaElement? _mediaElement;
+    readonly MediaElement _mediaElement;
     readonly DispatcherTimer _timer;
 
     private void OnMediaEnded(object sender, RoutedEventArgs e)
@@ -83,5 +81,11 @@ public class MediaPlayerService : IMediaPlayerService
         IsPlaying = false;
 
         OnStopped?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnMediaOpened(object sender, RoutedEventArgs e)
+    {
+        _mediaElement.Pause();
+        _mediaElement.MediaOpened -= OnMediaOpened;
     }
 }

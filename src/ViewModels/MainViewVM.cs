@@ -18,9 +18,6 @@ internal partial class MainViewVM : ObservableObject
     public partial FrameworkElement? GazePlot { get; set; }
 
     [ObservableProperty]
-    public partial Uri? VideoSource { get; set; } = null;
-
-    [ObservableProperty]
     public partial double VideoDelay { get; set; } = 0;     // seconds
 
     [ObservableProperty]
@@ -145,7 +142,7 @@ internal partial class MainViewVM : ObservableObject
 
         if (ofd.ShowDialog() == true)
         {
-            VideoSource = new Uri(ofd.FileName);
+            _mediaPlayerService.Load(new Uri(ofd.FileName));
             IsPlaybackEnabled = true;
         }
     }
@@ -153,9 +150,6 @@ internal partial class MainViewVM : ObservableObject
     [RelayCommand]
     private void PlayVideo()
     {
-        if (VideoSource == null)
-            return;
-
         if (_mediaPlayerService.IsPlaying)
         {
             _mediaPlayerService.Pause();
