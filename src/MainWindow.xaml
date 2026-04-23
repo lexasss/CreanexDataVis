@@ -13,20 +13,22 @@
         Width="1200"
         MinHeight="620"
         MinWidth="496">
+    
     <Window.InputBindings>
         <KeyBinding 
             Key="Space" 
             Command="{Binding TogglePlayVideoCommand}" />
     </Window.InputBindings>
+    
     <Window.Resources>
+        <conv:NegateConveter x:Key="Not"/>
+
         <Style x:Key="ToolbarIconButton" TargetType="Button">
             <Setter Property="MinHeight" Value="26"/>
             <Setter Property="MinWidth" Value="32"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-
-        <conv:NegateConveter x:Key="Not"/>
     </Window.Resources>
     
     <TabControl>

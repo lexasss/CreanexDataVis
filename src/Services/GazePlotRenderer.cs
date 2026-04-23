@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 
 namespace CreanexDataVis.Services;
 
@@ -29,12 +30,14 @@ internal class GazePlotRenderer
         private readonly VisualCollection _children;
     }
 
+    public const double MsToPixel = 800;   // scale
+
     public GazePlotRenderer()
     {
         CoordGridPen.Freeze();
     }
 
-    public Canvas? Create(VarjoRecord[] records)
+    public Canvas? Create(VarjoRecord[] records, out Point offset)
     {
         if (records.Length == 0)
             return null;
@@ -76,9 +79,14 @@ internal class GazePlotRenderer
             Width = boundingBox.Width,
             Height = boundingBox.Height,
             Margin = new Thickness(Margin),
-            Children = { new Image() { Source = source } }
+            ClipToBounds = true,
+            Children = {
+                new Image() { Source = source },
+                new Ellipse() { Width = GazeMarkSize, Height = GazeMarkSize, Fill = GazeMarkBrush }
+            }
         };
 
+        offset = new Point(boundingBox.Left, boundingBox.Top);
         return canvas;
     }
 
@@ -91,9 +99,10 @@ internal class GazePlotRenderer
     }
 
     const int Margin = 8;           // pixels
-    const double MsToPixel = 800;   // scale
+    const int GazeMarkSize = 10;    // pixels
 
     readonly Pen CoordGridPen = new(Brushes.Black, 2);
+    readonly Brush GazeMarkBrush = Brushes.Red;
 
     private DrawingVisual DrawPath(VarjoRecord[] records, out Range<int> boundingBox)
     {

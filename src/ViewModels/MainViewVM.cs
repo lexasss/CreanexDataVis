@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace CreanexDataVis.ViewModels;
 
@@ -22,6 +23,9 @@ internal partial class MainViewVM : ObservableObject
 
     [ObservableProperty]
     public partial double PlaybackTime { get; set; } = 0;   // seconds
+
+    [ObservableProperty]
+    public partial Transform GazePointPosition { get; set; } = new TranslateTransform(-100, 0);
 
     [ObservableProperty]
     public partial bool IsPlaybackEnabled { get; set; } = false;
@@ -54,6 +58,11 @@ internal partial class MainViewVM : ObservableObject
             {
                 TimelineScrollX = x - 0.05 * TimelineWidth;
             }
+
+            if (_timelineRecords != null && _varjoRecords != null)
+            {
+                GazePointPosition = CalculateGazePoint(x / Timeline!.ActualWidth);
+            }
         };
         _mediaPlayerService.OnStopped += (s, e) =>
         {
@@ -71,6 +80,11 @@ internal partial class MainViewVM : ObservableObject
 
     readonly Services.IMediaPlayerService _mediaPlayerService;
 
+    Models.TimelineRecord[]? _timelineRecords;
+    Models.VarjoRecord[]? _varjoRecords;
+
+    Point _gazePlotOffset;
+
     [RelayCommand]
     private void LoadCreanexData()
     {
@@ -81,11 +95,11 @@ internal partial class MainViewVM : ObservableObject
 
         if (ofd.ShowDialog() == true)
         {
-            var records = Services.TimelineDataParser.Parse(ofd.FileName);
-            if (records != null)
+            _timelineRecords = Services.TimelineDataParser.Parse(ofd.FileName);
+            if (_timelineRecords != null)
             {
                 var renderer = new Services.TimelineRenderer();
-                var canvas = renderer.Create(records);
+                var canvas = renderer.Create(_timelineRecords);
 
                 Timeline = canvas;
                 Title = $"{MainTitle} - {System.IO.Path.GetFileName(ofd.FileName)}";
@@ -117,19 +131,33 @@ internal partial class MainViewVM : ObservableObject
     [RelayCommand]
     private void LoadVarjoData()
     {
-        OpenFileDialog ofd = new OpenFileDialog()
+        var ofd = new OpenFileDialog()
         {
             Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == true)
         {
-            var records = Services.VarjoDataParser.Parse(ofd.FileName);
-            if (records != null)
+            _varjoRecords = Services.VarjoDataParser.Parse(ofd.FileName);
+            if (_varjoRecords != null)
             {
                 var renderer = new Services.GazePlotRenderer();
-                GazePlot = renderer.Create(records);
+                var canvas = renderer.Create(_varjoRecords, out _gazePlotOffset);
+
+                GazePlot = canvas;
                 Title = $"{MainTitle} - {System.IO.Path.GetFileName(ofd.FileName)}";
+
+                if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
+                {
+                    var positionBinding = new Binding(nameof(GazePointPosition))
+                    {
+                        Source = this,
+                        Mode = BindingMode.OneWay,
+                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                    };
+
+                    gazeMark.SetBinding(UIElement.RenderTransformProperty, positionBinding);
+                }
             }
         }
     }
@@ -137,7 +165,7 @@ internal partial class MainViewVM : ObservableObject
     [RelayCommand]
     private void LoadVideo()
     {
-        OpenFileDialog ofd = new OpenFileDialog()
+        var ofd = new OpenFileDialog()
         {
             Filter = "Video files (*.mp4;*.avi)|*.mp4;*.avi|All files (*.*)|*.*"
         };
@@ -164,5 +192,18 @@ internal partial class MainViewVM : ObservableObject
             IsPlaying = true;
             TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
+    }
+
+    private TranslateTransform CalculateGazePoint(double normalizedTimestamp)
+    {
+        int tlIndex = (int)(normalizedTimestamp * _timelineRecords!.Length);
+        var timestamp = _timelineRecords![tlIndex].TimeStamp;
+        var varjoRecord = _varjoRecords!.FirstOrDefault(r => r.Timestamp >= timestamp);
+        if (varjoRecord == null)
+            return new TranslateTransform(-100, 0);
+
+        var x = (1.0 + varjoRecord.GazeForwardX) * Services.GazePlotRenderer.MsToPixel;
+        var y = (1.0 + varjoRecord.GazeForwardY) * Services.GazePlotRenderer.MsToPixel;
+        return new TranslateTransform(x - _gazePlotOffset.X, y - _gazePlotOffset.Y);
     }
 }
