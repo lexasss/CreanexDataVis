@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CreanexDataVis"
         xmlns:srv="clr-namespace:CreanexDataVis.Services"
-        xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
+        xmlns:conv="clr-namespace:CreanexDataVis.Converters"
         mc:Ignorable="d"
         Title="{Binding Title}"
         Icon="/Assets/Images/icon.png"
@@ -20,6 +20,8 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+
+        <conv:NegateConveter x:Key="Not"/>
     </Window.Resources>
     
     <TabControl>
@@ -35,13 +37,15 @@
                         <Label Content="Data:"/>
                         <Button Style="{StaticResource ToolbarIconButton}"
                                 Content="📂"
-                                Command="{Binding LoadCreanexDataCommand}"/>
+                                Command="{Binding LoadCreanexDataCommand}"
+                                IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
                     </ToolBar>
                     <ToolBar>
                         <Label Content="Video:"/>
                         <Button Style="{StaticResource ToolbarIconButton}"
                                 Content="📂"
-                                Command="{Binding LoadVideoCommand}"/>
+                                Command="{Binding LoadVideoCommand}"
+                                IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
                         <Label Content="Delaying"/>
                         <TextBox Width="40" Text="{Binding VideoDelay}"/>
                         <Label Content="seconds"/>
@@ -68,6 +72,7 @@
                         <Style TargetType="Label">
                             <Setter Property="FontSize" Value="12"/>
                             <Setter Property="Margin" Value="2"/>
+                            <Setter Property="HorizontalAlignment" Value="Left"/>
                         </Style>
                     </StackPanel.Resources>
                     <Label>Harvester events</Label>
@@ -97,7 +102,8 @@
                     <Label Content="Data:"/>
                     <Button Style="{StaticResource ToolbarIconButton}"
                             Content="📂"
-                            Command="{Binding LoadVarjoDataCommand}"/>
+                            Command="{Binding LoadVarjoDataCommand}"
+                            IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
                 </ToolBar>
                 <ScrollViewer Grid.Row="1"
                               Content="{Binding GazePlot}"

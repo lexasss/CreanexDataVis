@@ -27,6 +27,9 @@ internal partial class MainViewVM : ObservableObject
     public partial bool IsPlaybackEnabled { get; set; } = false;
 
     [ObservableProperty]
+    public partial bool IsPlaying { get; set; } = false;
+
+    [ObservableProperty]
     public partial double TimelineScrollX { get; set; }
 
     [ObservableProperty]
@@ -55,6 +58,7 @@ internal partial class MainViewVM : ObservableObject
         _mediaPlayerService.OnStopped += (s, e) =>
         {
             PlaybackTime = 0;
+            IsPlaying = false;
             PlayVideoCommandLabel = VideoCommandPlayLabel;
         };
     }
@@ -100,14 +104,12 @@ internal partial class MainViewVM : ObservableObject
                     timeMark.SetBinding(System.Windows.Shapes.Line.X2Property, xBinding);
                 }
 
-                if (canvas?.Children.Count > 2)
+                canvas?.MouseLeftButtonDown += (s, e) =>
                 {
-                    canvas?.Children[2].MouseLeftButtonDown += (s, e) =>
-                    {
-                        var pos = e.GetPosition(canvas);
-                        PlaybackTime = TimeSpan.FromMilliseconds(pos.X / Services.TimelineRenderer.MsToPixel).TotalSeconds;
-                    };
-                }
+                    e.Handled = true;
+                    var pos = e.GetPosition(canvas);
+                    PlaybackTime = TimeSpan.FromMilliseconds(pos.X / Services.TimelineRenderer.MsToPixel).TotalSeconds;
+                };
             }
         }
     }
@@ -153,11 +155,13 @@ internal partial class MainViewVM : ObservableObject
         if (_mediaPlayerService.IsPlaying)
         {
             _mediaPlayerService.Pause();
+            IsPlaying = false;
             PlayVideoCommandLabel = VideoCommandPlayLabel;
         }
         else
         {
             _mediaPlayerService.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
+            IsPlaying = true;
             PlayVideoCommandLabel = VideoCommandPauseLabel;
         }
     }

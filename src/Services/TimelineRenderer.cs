@@ -88,6 +88,15 @@ internal class TimelineRenderer
             Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
         };
 
+        /*/ Creating a clipped bitmap
+        var bitmap = new RenderTargetBitmap(
+            (int)host.Width, (int)host.Height,
+            96, 96,
+            PixelFormats.Pbgra32);
+        bitmap.Render(host);
+        var imageSource = Clip(bitmap, -(int)host.RenderTransform.Value.OffsetX);
+        */
+
         var timeMarker = new System.Windows.Shapes.Line
         {
             X1 = Margin,
@@ -98,18 +107,11 @@ internal class TimelineRenderer
             StrokeThickness = 1
         };
 
-        var transparent = new Label
-        {
-            Width = host.Width,
-            Height = host.Height,
-            Background = Brushes.Transparent
-        };
-
         var canvas = new Canvas
         {
             Width = host.Width,
             Height = host.Height,
-            Children = { host, timeMarker, transparent }
+            Children = { host, timeMarker }
         };
 
         return canvas;
@@ -129,6 +131,7 @@ internal class TimelineRenderer
     readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
     readonly Typeface FontFamily = new("Segoe UI");
     readonly Brush FontBrush = Brushes.Black;
+    readonly Brush BackgroundBrush = Brushes.WhiteSmoke;
     readonly Brush TrackBackgroundBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220));
     readonly Brush TrackDrivingBackwardBrush = Brushes.Red;
     readonly Brush[] TrackBrushes =
@@ -164,6 +167,9 @@ internal class TimelineRenderer
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
+            dc.DrawRectangle(BackgroundBrush, null, new Rect(0, 0,
+                width + Margin, Margin + trackCount * (TrackHeight + TrackSpacing) + TrackHeight));
+
             for (int i = 0; i < trackCount; i++)
             {
                 int y = Margin + i * (TrackHeight + TrackSpacing);
@@ -307,6 +313,21 @@ internal class TimelineRenderer
         var pixels = new byte[stride * bitmap.PixelHeight];
 
         bitmap.CopyPixels(new Int32Rect(clippedStartX, 0, clippedWidth, bitmap.PixelHeight),
+            pixels, stride, 0);
+
+        return BitmapSource.Create(clippedWidth, bitmap.PixelHeight,
+            96, 96,
+            PixelFormats.Pbgra32,
+            null, pixels, stride);
+    }
+
+    private static BitmapSource Clip(RenderTargetBitmap bitmap, int x)
+    {
+        var clippedWidth = bitmap.PixelWidth - x;
+        var stride = clippedWidth * 4;
+        var pixels = new byte[stride * bitmap.PixelHeight];
+
+        bitmap.CopyPixels(new Int32Rect(x, 0, clippedWidth, bitmap.PixelHeight),
             pixels, stride, 0);
 
         return BitmapSource.Create(clippedWidth, bitmap.PixelHeight,
