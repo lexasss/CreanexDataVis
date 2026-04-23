@@ -1,6 +1,10 @@
-﻿using CreanexDataVis.Models;
+﻿using CreanexDataVis.Helpers;
+using CreanexDataVis.Models;
+using System.Numerics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace CreanexDataVis.Services;
 
@@ -27,44 +31,108 @@ internal class GazePlotRenderer
 
     public GazePlotRenderer()
     {
-        PathPen.Freeze();
+        CoordGridPen.Freeze();
     }
 
-    public FrameworkElement? Create(VarjoRecord[] records)
+    public Canvas? Create(VarjoRecord[] records)
     {
         if (records.Length == 0)
             return null;
 
-        var path = DrawPath(records, out Range boundingBox);
+        var path = DrawPath(records, out Range<int> boundingBox);
 
         var host = new VisualHost([path])
         {
-            RenderTransform = new TranslateTransform(Margin, Margin),
-            Width = 2 * Margin + 2 * MsToPixel,
-            Height = 2 * Margin + 2 * MsToPixel,
-            VerticalAlignment = VerticalAlignment.Top,
-            HorizontalAlignment = HorizontalAlignment.Left
+            RenderTransform = new TranslateTransform(-boundingBox.Left, -boundingBox.Top),
+            Width = boundingBox.Width,
+            Height = boundingBox.Height
         };
 
-        return host;
+        // Creating bitmap source
+        var bitmap = new RenderTargetBitmap(
+            boundingBox.Right,
+            boundingBox.Bottom,
+            96, 96,
+            PixelFormats.Pbgra32);
+        bitmap.Render(host);
+
+        var stride = boundingBox.Width * 4;
+        var pixels = new byte[stride * boundingBox.Height];
+
+        bitmap.CopyPixels(new Int32Rect(
+                boundingBox.Left,
+                boundingBox.Top,
+                boundingBox.Width,
+                boundingBox.Height),
+            pixels, stride, 0);
+
+        var source = BitmapSource.Create(boundingBox.Width, boundingBox.Height,
+            96, 96,
+            PixelFormats.Pbgra32,
+            null, pixels, stride);
+
+        var canvas = new Canvas
+        {
+            Width = boundingBox.Width,
+            Height = boundingBox.Height,
+            Margin = new Thickness(Margin),
+            Children = { new Image() { Source = source } }
+        };
+
+        return canvas;
     }
 
     // Internal
-    record class Range(double Left, double Right, double Top, double Bottom);
-
-    const int Margin = 5;           // pixels
-    const double MsToPixel = 1500;   // scale
-
-    readonly Pen PathPen = new(Brushes.Red, 1);
-
-    private DrawingVisual DrawPath(VarjoRecord[] records, out Range boundingBox)
+    record class Range<T>(T Left, T Right, T Top, T Bottom)
+        where T : INumber<T>
     {
-        double minX = double.MaxValue, maxX = double.MinValue, minY = double.MaxValue, maxY = double.MinValue;
+        public T Width => Right - Left;
+        public T Height => Bottom - Top;
+    }
+
+    const int Margin = 8;           // pixels
+    const double MsToPixel = 800;   // scale
+
+    readonly Pen CoordGridPen = new(Brushes.Black, 2);
+
+    private DrawingVisual DrawPath(VarjoRecord[] records, out Range<int> boundingBox)
+    {
+        double minX = double.MaxValue, 
+            maxX = double.MinValue, 
+            minY = double.MaxValue, 
+            maxY = double.MinValue;
         double prevX = 0, prevY = 0;
-        /*
-        var points = records.Select(r => {
+
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            List<Point> points = [];
+
+            for (int i = 0; i < records.Length; i++)
+            {
+                var r = records[i];
+
                 if (r.GazeStatus != GazeStatus.Valid)
-                    return new Point();
+                {
+                    if (points.Count > 1)
+                    {
+                        var geometry = new StreamGeometry();
+                        using (var ctx = geometry.Open())
+                        {
+                            ctx.BeginFigure(points[0], false, false);
+                            ctx.PolyLineTo(points, true, false);
+                        }
+
+                        geometry.Freeze();
+
+                        double h = 360.0 * (i - points.Count) / records.Length;
+                        var pen = new Pen(new SolidColorBrush(ColorHelper.FromHsl(h, 1, 0.4)), 1);
+                        dc.DrawGeometry(null, pen, geometry);
+                    }
+
+                    points.Clear();
+                    continue;
+                }
 
                 var x = (1.0 + r.GazeForwardX) * MsToPixel;
                 var y = (1.0 + r.GazeForwardY) * MsToPixel;
@@ -74,79 +142,19 @@ internal class GazePlotRenderer
                     if (x > maxX) maxX = x;
                     if (y < minY) minY = y;
                     if (y > maxY) maxY = y;
+
                     prevX = x;
                     prevY = y;
-                    return new Point(x, y);
-                }
-                return new Point();
-            })
-            .Where(p => p.X != 0 || p.Y != 0)
-            .ToArray();
 
-        var dv = new DrawingVisual();
-        using (var dc = dv.RenderOpen())
-        {
-            var geometry = new StreamGeometry();
-
-            using (var ctx = geometry.Open())
-            {
-                ctx.BeginFigure(points[0], false, false);
-                ctx.PolyLineTo(points, true, false);
-            }
-
-            geometry.Freeze();
-
-            dc.DrawGeometry(null, PathPen, geometry);
-        }*/
-
-        var dv = new DrawingVisual();
-        using (var dc = dv.RenderOpen())
-        {
-            List<Point> points = [];
-
-            var geometry = new StreamGeometry();
-
-            using (var ctx = geometry.Open())
-            {
-                for (int i = 0; i < records.Length; i++)
-                {
-                    var r = records[i];
-
-                    if (r.GazeStatus != GazeStatus.Valid)
-                    {
-                        if (points.Count > 1)
-                        {
-                            ctx.BeginFigure(points[0], false, false);
-                            ctx.PolyLineTo(points, true, false);
-                        }
-
-                        points.Clear();
-                        continue;
-                    }
-
-                    var x = (1.0 + r.GazeForwardX) * MsToPixel;
-                    var y = (1.0 + r.GazeForwardY) * MsToPixel;
-                    if (x != prevX || y != prevY)
-                    {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-
-                        prevX = x;
-                        prevY = y;
-
-                        points.Add(new Point(x, y));
-                    }
+                    points.Add(new Point(x, y));
                 }
             }
 
-            geometry.Freeze();
-
-            dc.DrawGeometry(null, PathPen, geometry);
+            dc.DrawLine(CoordGridPen, new Point(0, MsToPixel), new Point(2 * MsToPixel, MsToPixel));
+            dc.DrawLine(CoordGridPen, new Point(MsToPixel, 0), new Point(MsToPixel, 2 * MsToPixel));
         }
 
-        boundingBox = new Range(minX, maxX, minY, maxY);
+        boundingBox = new Range<int>((int)minX, (int)maxX, (int)minY, (int)maxY);
         return dv;
     }
 }

@@ -60,7 +60,7 @@ internal class TimelineRenderer
             End = Math.Min(endTime, eventsRange.End + 1000)
         };
 
-        return Clip(bitmap, startTime, eventsRange);
+        return CreateBitmapSource(bitmap, startTime, eventsRange);
     }
 
     public Canvas? Create(TimelineRecord[] records)
@@ -87,15 +87,6 @@ internal class TimelineRenderer
             Width = (duration - blankPeriodBefore - blankPeriodAfter) * MsToPixel + Margin,
             Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
         };
-
-        /*/ Creating a clipped bitmap
-        var bitmap = new RenderTargetBitmap(
-            (int)host.Width, (int)host.Height,
-            96, 96,
-            PixelFormats.Pbgra32);
-        bitmap.Render(host);
-        var imageSource = Clip(bitmap, -(int)host.RenderTransform.Value.OffsetX);
-        */
 
         var timeMarker = new System.Windows.Shapes.Line
         {
@@ -304,7 +295,7 @@ internal class TimelineRenderer
         return dv;
     }
 
-    private static BitmapSource Clip(RenderTargetBitmap bitmap, long startTime, Range timeRange)
+    private static BitmapSource CreateBitmapSource(RenderTargetBitmap bitmap, long startTime, Range timeRange)
     {
         var clippedStartX = (int)((timeRange.Start - startTime) * MsToPixel);
         var clippedEndX = (int)((timeRange.End - startTime) * MsToPixel);
@@ -321,13 +312,13 @@ internal class TimelineRenderer
             null, pixels, stride);
     }
 
-    private static BitmapSource Clip(RenderTargetBitmap bitmap, int x)
+    private static BitmapSource CreateBitmapSource(RenderTargetBitmap bitmap, int offsetX)
     {
-        var clippedWidth = bitmap.PixelWidth - x;
+        var clippedWidth = bitmap.PixelWidth - offsetX;
         var stride = clippedWidth * 4;
         var pixels = new byte[stride * bitmap.PixelHeight];
 
-        bitmap.CopyPixels(new Int32Rect(x, 0, clippedWidth, bitmap.PixelHeight),
+        bitmap.CopyPixels(new Int32Rect(offsetX, 0, clippedWidth, bitmap.PixelHeight),
             pixels, stride, 0);
 
         return BitmapSource.Create(clippedWidth, bitmap.PixelHeight,

@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace CreanexDataVis.Services;
+namespace CreanexDataVis.Helpers;
 
 public static class ScrollViewerBinding
 {

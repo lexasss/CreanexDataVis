@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CreanexDataVis"
-        xmlns:srv="clr-namespace:CreanexDataVis.Services"
+        xmlns:hlp="clr-namespace:CreanexDataVis.Helpers"
         xmlns:conv="clr-namespace:CreanexDataVis.Converters"
         mc:Ignorable="d"
         Title="{Binding Title}"
@@ -62,9 +62,9 @@
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto"
                               VerticalAlignment="Top"
-                              srv:ScrollViewerBinding.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
-                              srv:ScrollViewerBinding.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
-                              srv:ScrollViewerBinding.EnableViewportWidthBinding="True">
+                              hlp:ScrollViewerBinding.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
+                              hlp:ScrollViewerBinding.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
+                              hlp:ScrollViewerBinding.EnableViewportWidthBinding="True">
                     <!--Image x:Name="imgTimeline"/-->
                 </ScrollViewer>
                 <StackPanel Grid.Row="1">
