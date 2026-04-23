@@ -13,6 +13,11 @@
         Width="1200"
         MinHeight="620"
         MinWidth="496">
+    <Window.InputBindings>
+        <KeyBinding 
+            Key="Space" 
+            Command="{Binding TogglePlayVideoCommand}" />
+    </Window.InputBindings>
     <Window.Resources>
         <Style x:Key="ToolbarIconButton" TargetType="Button">
             <Setter Property="MinHeight" Value="26"/>
@@ -25,6 +30,12 @@
     </Window.Resources>
     
     <TabControl>
+        <TabControl.Resources>
+            <Style TargetType="TabItem">
+                <Setter Property="Padding" Value="16,8"/>
+            </Style>
+        </TabControl.Resources>
+        
         <TabItem Header="Gazing timeline">
             <Grid>
                 <Grid.RowDefinitions>
@@ -51,8 +62,8 @@
                         <Label Content="seconds"/>
                         <Separator/>
                         <Button Style="{StaticResource ToolbarIconButton}"
-                                Content="{Binding PlayVideoCommandLabel}"
-                                Command="{Binding PlayVideoCommand}"
+                                Content="{Binding TogglePlayVideoCommandLabel}"
+                                Command="{Binding TogglePlayVideoCommand}"
                                 IsEnabled="{Binding IsPlaybackEnabled}"/>
                     </ToolBar>
                 </ToolBarTray>

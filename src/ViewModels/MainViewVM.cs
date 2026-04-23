@@ -36,7 +36,7 @@ internal partial class MainViewVM : ObservableObject
     public partial double TimelineWidth { get; set; }
 
     [ObservableProperty]
-    public partial string PlayVideoCommandLabel { get; set; } = VideoCommandPlayLabel;
+    public partial string TogglePlayVideoCommandLabel { get; set; } = VideoCommandPlayLabel;
 
     public MainViewVM(Services.IMediaPlayerService mediaPlayerService)
     {
@@ -59,7 +59,7 @@ internal partial class MainViewVM : ObservableObject
         {
             PlaybackTime = 0;
             IsPlaying = false;
-            PlayVideoCommandLabel = VideoCommandPlayLabel;
+            TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
         };
     }
 
@@ -150,19 +150,19 @@ internal partial class MainViewVM : ObservableObject
     }
 
     [RelayCommand]
-    private void PlayVideo()
+    private void TogglePlayVideo()
     {
         if (_mediaPlayerService.IsPlaying)
         {
             _mediaPlayerService.Pause();
             IsPlaying = false;
-            PlayVideoCommandLabel = VideoCommandPlayLabel;
+            TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
         }
-        else
+        else if (IsPlaybackEnabled)
         {
             _mediaPlayerService.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
             IsPlaying = true;
-            PlayVideoCommandLabel = VideoCommandPauseLabel;
+            TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
     }
 }
