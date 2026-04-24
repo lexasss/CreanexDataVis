@@ -12,6 +12,6 @@ public partial class MainWindow : Window
 
         var mediaService = new MediaPlayerService(VideoPlayer);
 
-        DataContext = new MainViewVM(mediaService);
+        DataContext = new MainViewModel(mediaService);
     }
 }

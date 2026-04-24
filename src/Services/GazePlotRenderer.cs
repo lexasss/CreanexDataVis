@@ -31,8 +31,8 @@ internal class GazePlotRenderer
     }
 
     public static Point GazeToPixels(VarjoRecord r) => new(
-        (1.0 + r.GazeForwardX) * VectorToPixel,
-        (1.0 + r.GazeForwardY) * VectorToPixel);
+        (1.0 + r.GazeForwardX) * VectorToPixel + GazeMarkSize / 2,
+        (1.0 - r.GazeForwardY) * VectorToPixel + GazeMarkSize / 2);
 
     public GazePlotRenderer()
     {
@@ -103,13 +103,33 @@ internal class GazePlotRenderer
     const int Margin = 8;           // pixels
     const int GazeMarkSize = 10;    // pixels
 
-    const double VectorToPixel = 800;   // scale
+    const double VectorToPixel = 400;   // scale
 
-    readonly Pen CoordGridPen = new(Brushes.Black, 2);
-    readonly Brush GazeMarkBrush = Brushes.Red;
+    readonly Pen CoordGridPen = new(Brushes.DarkGray, 2);
+    readonly Brush GazeMarkBrush = Brushes.Black;
 
     private DrawingVisual DrawPath(VarjoRecord[] records, out Range<int> boundingBox)
     {
+        void DrawPoints(DrawingContext dc, IList<Point> points, double hue)
+        {
+            if (points.Count > 1)
+            {
+                var geometry = new StreamGeometry();
+                using (var ctx = geometry.Open())
+                {
+                    ctx.BeginFigure(points[0], false, false);
+                    ctx.PolyLineTo(points, true, false);
+                }
+
+                geometry.Freeze();
+
+                var pen = new Pen(new SolidColorBrush(ColorHelper.FromHsl(hue, 1, 0.4)), 1);
+                dc.DrawGeometry(null, pen, geometry);
+            }
+
+            points.Clear();
+        }
+
         double minX = double.MaxValue, 
             maxX = double.MinValue, 
             minY = double.MaxValue, 
@@ -127,23 +147,7 @@ internal class GazePlotRenderer
 
                 if (r.GazeStatus != GazeStatus.Valid)
                 {
-                    if (points.Count > 1)
-                    {
-                        var geometry = new StreamGeometry();
-                        using (var ctx = geometry.Open())
-                        {
-                            ctx.BeginFigure(points[0], false, false);
-                            ctx.PolyLineTo(points, true, false);
-                        }
-
-                        geometry.Freeze();
-
-                        double h = 360.0 * (i - points.Count) / records.Length;
-                        var pen = new Pen(new SolidColorBrush(ColorHelper.FromHsl(h, 1, 0.4)), 1);
-                        dc.DrawGeometry(null, pen, geometry);
-                    }
-
-                    points.Clear();
+                    DrawPoints(dc, points, 360.0 * (i - points.Count) / records.Length);
                     continue;
                 }
 
@@ -160,8 +164,14 @@ internal class GazePlotRenderer
                 }
             }
 
-            dc.DrawLine(CoordGridPen, new Point(0, VectorToPixel), new Point(2 * VectorToPixel, VectorToPixel));
-            dc.DrawLine(CoordGridPen, new Point(VectorToPixel, 0), new Point(VectorToPixel, 2 * VectorToPixel));
+            DrawPoints(dc, points, 360);
+
+            dc.DrawLine(CoordGridPen, 
+                new Point(0, VectorToPixel + GazeMarkSize / 2), 
+                new Point(2 * VectorToPixel, VectorToPixel + GazeMarkSize / 2));
+            dc.DrawLine(CoordGridPen, 
+                new Point(VectorToPixel + GazeMarkSize / 2, 0),
+                new Point(VectorToPixel + GazeMarkSize / 2, 2 * VectorToPixel));
         }
 
         boundingBox = new Range<int>((int)minX, (int)maxX, (int)minY, (int)maxY);

@@ -31,100 +31,91 @@
         </Style>
     </Window.Resources>
     
-    <TabControl>
-        <TabControl.Resources>
-            <Style TargetType="TabItem">
-                <Setter Property="Padding" Value="16,8"/>
-            </Style>
-        </TabControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         
-        <TabItem Header="Gazing timeline">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <ToolBarTray Grid.Row="0">
-                    <ToolBar>
-                        <Label Content="Data:"/>
-                        <Button Style="{StaticResource ToolbarIconButton}"
-                                Content="📂"
-                                Command="{Binding LoadCreanexDataCommand}"
-                                IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
-                    </ToolBar>
-                    <ToolBar>
-                        <Label Content="Video:"/>
-                        <Button Style="{StaticResource ToolbarIconButton}"
-                                Content="📂"
-                                Command="{Binding LoadVideoCommand}"
-                                IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
-                        <Label Content="Delaying"/>
-                        <TextBox Width="40" Text="{Binding VideoDelay}"/>
-                        <Label Content="seconds"/>
-                        <Separator/>
-                        <Button Style="{StaticResource ToolbarIconButton}"
-                                Content="{Binding TogglePlayVideoCommandLabel}"
-                                Command="{Binding TogglePlayVideoCommand}"
-                                IsEnabled="{Binding IsPlaybackEnabled}"/>
-                    </ToolBar>
-                </ToolBarTray>
+        <ToolBarTray Grid.Row="0">
+            <ToolBar>
+                <Label Content="Timeline:"/>
+                <Button Style="{StaticResource ToolbarIconButton}"
+                        Content="📂"
+                        Command="{Binding LoadCreanexDataCommand}"
+                        IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
+            </ToolBar>
+            
+            <ToolBar>
+                <Label Content="Video:"/>
+                <Button Style="{StaticResource ToolbarIconButton}"
+                        Content="📂"
+                        Command="{Binding LoadVideoCommand}"
+                        IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
+                <Label Content="Delaying"/>
+                <TextBox Width="40" Text="{Binding VideoDelay}"/>
+                <Label Content="seconds"/>
+                <Separator/>
+                <Button Style="{StaticResource ToolbarIconButton}"
+                        Content="{Binding TogglePlayVideoCommandLabel}"
+                        Command="{Binding TogglePlayVideoCommand}"
+                        IsEnabled="{Binding IsPlaybackEnabled}"/>
+            </ToolBar>
 
-                <ScrollViewer Grid.Row="1"
-                              Content="{Binding Timeline}"
-                              HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto"
-                              VerticalAlignment="Top"
-                              hlp:ScrollViewerBinding.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
-                              hlp:ScrollViewerBinding.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
-                              hlp:ScrollViewerBinding.EnableViewportWidthBinding="True">
-                    <!--Image x:Name="imgTimeline"/-->
-                </ScrollViewer>
-                <StackPanel Grid.Row="1">
-                    <StackPanel.Resources>
-                        <Style TargetType="Label">
-                            <Setter Property="FontSize" Value="12"/>
-                            <Setter Property="Margin" Value="2"/>
-                            <Setter Property="HorizontalAlignment" Value="Left"/>
-                        </Style>
-                    </StackPanel.Resources>
-                    <Label>Harvester events</Label>
-                    <Label>Left Window</Label>
-                    <Label>Front Window</Label>
-                    <Label>Right Window</Label>
-                    <Label>TDA Screen</Label>
-                    <Label>Harvester Head</Label>
-                    <Label>Target Tree</Label>
-                </StackPanel>
-
-                <MediaElement x:Name="VideoPlayer" Grid.Row="2"
-                              MinWidth="480"
-                              MinHeight="320"
-                              Stretch="Uniform"
-                              LoadedBehavior="Manual"
-                              UnloadedBehavior="Manual"/>
-            </Grid>
-        </TabItem>
-        <TabItem Header="Gaze point">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <ToolBar Grid.Row="0">
-                    <Label Content="Data:"/>
-                    <Button Style="{StaticResource ToolbarIconButton}"
+            <ToolBar>
+                <Label Content="Varjo:"/>
+                <Button Style="{StaticResource ToolbarIconButton}"
                             Content="📂"
                             Command="{Binding LoadVarjoDataCommand}"
                             IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
-                </ToolBar>
-                <ScrollViewer Grid.Row="1"
-                              Content="{Binding GazePlot}"
-                              HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto"
-                              VerticalAlignment="Top">
-                </ScrollViewer>
-            </Grid>
-        </TabItem>
-    </TabControl>
+            </ToolBar>
+        </ToolBarTray>
+
+        <ScrollViewer Grid.Row="1"
+                        Content="{Binding Timeline}"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalAlignment="Top"
+                        hlp:ScrollViewerProperties.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
+                        hlp:ScrollViewerProperties.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
+                        hlp:ScrollViewerProperties.EnableExtraBindings="True">
+            <!--Image x:Name="imgTimeline"/-->
+        </ScrollViewer>
+        <StackPanel Grid.Row="1">
+            <StackPanel.Resources>
+                <Style TargetType="Label">
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="Margin" Value="2"/>
+                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                </Style>
+            </StackPanel.Resources>
+            <Label>Harvester events</Label>
+            <Label>Left Window</Label>
+            <Label>Front Window</Label>
+            <Label>Right Window</Label>
+            <Label>TDA Screen</Label>
+            <Label>Harvester Head</Label>
+            <Label>Target Tree</Label>
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <MediaElement x:Name="VideoPlayer" Grid.Column="0"
+                        MinWidth="480"
+                        MinHeight="320"
+                        Stretch="Uniform"
+                        LoadedBehavior="Manual"
+                        UnloadedBehavior="Manual"/>
+            <ScrollViewer Grid.Column="1"
+                        Content="{Binding GazePlot}"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalAlignment="Top">
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </Window>

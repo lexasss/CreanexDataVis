@@ -4,9 +4,18 @@ using System.IO;
 
 namespace CreanexDataVis.Services;
 
-internal static class TimelineDataParser
+internal class TimelineDataParser
 {
-    public static TimelineRecord[]? Parse(string filePath)
+    public string Filename { get; }
+    public TimelineRecord[]? Records { get; }
+
+    public TimelineDataParser(string filename)
+    {
+        Filename = filename;
+        Records = Parse(filename);
+    }
+
+    private static TimelineRecord[]? Parse(string filePath)
     {
         var result = new List<TimelineRecord>();
 
@@ -25,7 +34,7 @@ internal static class TimelineDataParser
 
                 var record = new TimelineRecord
                 {
-                    TimeStamp = long.Parse(parts[0], CultureInfo.InvariantCulture),
+                    Timestamp = long.Parse(parts[0], CultureInfo.InvariantCulture),
                     GazeLeftWindow = parts[1] == "1",
                     GazeFrontWindow = parts[2] == "1",
                     GazeRightWindow = parts[3] == "1",

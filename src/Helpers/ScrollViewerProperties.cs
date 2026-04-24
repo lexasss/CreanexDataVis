@@ -3,13 +3,19 @@ using System.Windows.Controls;
 
 namespace CreanexDataVis.Helpers;
 
-public static class ScrollViewerBinding
+/// <summary>
+/// Additional properties for ScrollViewer to allow MVVM
+/// </summary>
+public static class ScrollViewerProperties
 {
+    // ------------------------------
+    // HorizontalOffset
+    // ------------------------------
     public static readonly DependencyProperty HorizontalOffsetProperty =
         DependencyProperty.RegisterAttached(
             "HorizontalOffset",
             typeof(double),
-            typeof(ScrollViewerBinding),
+            typeof(ScrollViewerProperties),
             new FrameworkPropertyMetadata(0.0,
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnHorizontalOffsetChanged));
@@ -25,23 +31,17 @@ public static class ScrollViewerBinding
         if (d is ScrollViewer sv)
         {
             sv.ScrollToHorizontalOffset((double)e.NewValue);
-            sv.ScrollChanged -= ScrollChanged;
-            sv.ScrollChanged += ScrollChanged;
         }
     }
 
-    private static void ScrollChanged(object sender, ScrollChangedEventArgs e)
-    {
-        var sv = (ScrollViewer)sender;
-        SetHorizontalOffset(sv, sv.HorizontalOffset);
-    }
-
-
+    // ------------------------------
+    // BindableViewportWidth
+    // ------------------------------
     public static readonly DependencyProperty BindableViewportWidthProperty =
         DependencyProperty.RegisterAttached(
             "BindableViewportWidth",
             typeof(double),
-            typeof(ScrollViewerBinding),
+            typeof(ScrollViewerProperties),
             new FrameworkPropertyMetadata(0.0,
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
@@ -52,34 +52,38 @@ public static class ScrollViewerBinding
         => obj.SetValue(BindableViewportWidthProperty, value);
 
 
-    public static readonly DependencyProperty EnableViewportWidthBindingProperty =
+    // ------------------------------
+    // EnableExtraBindings
+    // ------------------------------
+    public static readonly DependencyProperty EnableExtraBindingsProperty =
         DependencyProperty.RegisterAttached(
-            "EnableViewportWidthBinding",
+            "EnableExtraBindings",
             typeof(bool),
-            typeof(ScrollViewerBinding),
+            typeof(ScrollViewerProperties),
             new FrameworkPropertyMetadata(false,
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-                OnEnableChanged));
+                OnEnableExtraBindingsChanged));
 
-    public static bool GetEnableViewportWidthBinding(DependencyObject obj)
-        => (bool)obj.GetValue(EnableViewportWidthBindingProperty);
-    public static void SetEnableViewportWidthBinding(DependencyObject obj, bool value)
-        => obj.SetValue(EnableViewportWidthBindingProperty, value);
+    public static bool GetEnableExtraBindings(DependencyObject obj)
+        => (bool)obj.GetValue(EnableExtraBindingsProperty);
+    public static void SetEnableExtraBindings(DependencyObject obj, bool value)
+        => obj.SetValue(EnableExtraBindingsProperty, value);
 
-    private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnEnableExtraBindingsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is ScrollViewer sv)
         {
             if ((bool)e.NewValue)
-                sv.ScrollChanged += Sv_ScrollChanged;
+                sv.ScrollChanged += ScrollChanged;
             else
-                sv.ScrollChanged -= Sv_ScrollChanged;
+                sv.ScrollChanged -= ScrollChanged;
         }
     }
 
-    private static void Sv_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    private static void ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         var sv = (ScrollViewer)sender;
+        SetHorizontalOffset(sv, sv.HorizontalOffset);
         SetBindableViewportWidth(sv, sv.ViewportWidth);
     }
 }

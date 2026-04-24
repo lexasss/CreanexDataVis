@@ -37,8 +37,8 @@ internal class TimelineRenderer
         if (records.Length == 0)
             return null;
 
-        long startTime = records[0].TimeStamp;
-        long endTime = records[^1].TimeStamp;
+        long startTime = records[0].Timestamp;
+        long endTime = records[^1].Timestamp;
 
         int trackCount = TrackBrushes.Length;
 
@@ -64,10 +64,13 @@ internal class TimelineRenderer
         return CreateBitmapSource(bitmap, startTime, eventsRange);
     }
 
-    public Canvas? Create(TimelineRecord[] records)
+    public Canvas? Create(TimelineRecord[] records, out double secondsOffset)
     {
         if (records.Length == 0)
+        {
+            secondsOffset = 0;
             return null;
+        }
 
         int trackCount = TrackBrushes.Length;
 
@@ -77,10 +80,10 @@ internal class TimelineRenderer
 
         // Clip the bitmap to the range of events, with some padding (1000 ms)
 
-        long startTime = records[0].TimeStamp;
-        long duration = records[^1].TimeStamp - startTime;
+        long startTime = records[0].Timestamp;
+        long duration = records[^1].Timestamp - startTime;
         long blankPeriodBefore = CropBlankPeriods ? Math.Max(0, eventsRange.Start - startTime - 1000) : 0;
-        long blankPeriodAfter = CropBlankPeriods ? Math.Max(0, records[^1].TimeStamp - eventsRange.End - 1000) : 0;
+        long blankPeriodAfter = CropBlankPeriods ? Math.Max(0, records[^1].Timestamp - eventsRange.End - 1000) : 0;
 
         var host = new VisualHost([tracks, timeline])
         {
@@ -106,6 +109,7 @@ internal class TimelineRenderer
             Children = { host, timeMarker }
         };
 
+        secondsOffset = (double)(eventsRange.Start - startTime - 1000) / 1000;  // -1000 due to padding
         return canvas;
     }
 
@@ -144,8 +148,8 @@ internal class TimelineRenderer
         double dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip;
         int minTreeId = records.Min(r => r.GazeTargetTreeId == 0 ? int.MaxValue : r.GazeTargetTreeId);
 
-        long startTime = records[0].TimeStamp;
-        long endTime = records[^1].TimeStamp;
+        long startTime = records[0].Timestamp;
+        long endTime = records[^1].Timestamp;
 
         long earliestEventTime = -1;
         long latestEventTime = startTime;
@@ -174,7 +178,7 @@ internal class TimelineRenderer
             {
                 var r = records[i];
 
-                int x = (int)((r.TimeStamp - startTime) * MsToPixel);
+                int x = (int)((r.Timestamp - startTime) * MsToPixel);
 
                 int prevGazeTargetTreeId = trackStatus[6];
 
@@ -188,10 +192,10 @@ internal class TimelineRenderer
 
                 bool wasDrivingBackward = r.DrivingEnd > 0; // weird decision to use 1 for backward and -1 for forward
 
-                latestEventTime = trackStatus.Any(s => s != 0) ? r.TimeStamp : latestEventTime;
+                latestEventTime = trackStatus.Any(s => s != 0) ? r.Timestamp : latestEventTime;
                 if (earliestEventTime < 0)
                 {
-                    earliestEventTime = trackStatus.Any(s => s != 0) ? r.TimeStamp : earliestEventTime;
+                    earliestEventTime = trackStatus.Any(s => s != 0) ? r.Timestamp : earliestEventTime;
                 }
 
                 for (int j = 0; j < trackStarts.Length; j++)
@@ -268,8 +272,8 @@ internal class TimelineRenderer
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
-            long startTime = records[0].TimeStamp;
-            long endTime = records[^1].TimeStamp;
+            long startTime = records[0].Timestamp;
+            long endTime = records[^1].Timestamp;
 
             long time = startTime;
 

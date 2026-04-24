@@ -2,7 +2,7 @@
 
 internal class TimelineRecord
 {
-    public long TimeStamp;
+    public long Timestamp;
     public bool GazeLeftWindow;
     public bool GazeFrontWindow;
     public bool GazeRightWindow;

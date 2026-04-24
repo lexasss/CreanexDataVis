@@ -4,15 +4,24 @@ using System.IO;
 
 namespace CreanexDataVis.Services;
 
-internal static class VarjoDataParser
+internal class VarjoDataParser
 {
-    public static VarjoRecord[]? Parse(string filePath)
+    public string Filename { get; }
+    public VarjoRecord[]? Records { get; }
+
+    public VarjoDataParser(string filename)
+    {
+        Filename = filename;
+        Records = Parse(filename);
+    }
+
+    private static VarjoRecord[]? Parse(string filename)
     {
         var result = new List<VarjoRecord>();
 
         try
         {
-            using var file = new StreamReader(filePath);
+            using var file = new StreamReader(filename);
             file.ReadLine(); // skip header, or just the first sample
 
             while (!file.EndOfStream)
