@@ -30,9 +30,11 @@ internal class GazePlotRenderer
         private readonly VisualCollection _children;
     }
 
-    public static Point GazeToPixels(VarjoRecord r) => new(
-        (1.0 + r.GazeForwardX) * VectorToPixel + GazeMarkSize / 2,
-        (1.0 - r.GazeForwardY) * VectorToPixel + GazeMarkSize / 2);
+    public static Point GetGazeMarkLocation(VarjoRecord r)
+    {
+        var pt = GazeToPixels(r);
+        return new(pt.X - GazeMarkSize / 2, pt.Y - GazeMarkSize / 2);
+    }
 
     public GazePlotRenderer()
     {
@@ -130,9 +132,9 @@ internal class GazePlotRenderer
             points.Clear();
         }
 
-        double minX = double.MaxValue, 
-            maxX = double.MinValue, 
-            minY = double.MaxValue, 
+        double minX = double.MaxValue,
+            maxX = double.MinValue,
+            minY = double.MaxValue,
             maxY = double.MinValue;
         Point prev = new();
 
@@ -166,15 +168,19 @@ internal class GazePlotRenderer
 
             DrawPoints(dc, points, 360);
 
-            dc.DrawLine(CoordGridPen, 
-                new Point(0, VectorToPixel + GazeMarkSize / 2), 
-                new Point(2 * VectorToPixel, VectorToPixel + GazeMarkSize / 2));
-            dc.DrawLine(CoordGridPen, 
-                new Point(VectorToPixel + GazeMarkSize / 2, 0),
-                new Point(VectorToPixel + GazeMarkSize / 2, 2 * VectorToPixel));
+            dc.DrawLine(CoordGridPen,
+                new Point(0, VectorToPixel),
+                new Point(2 * VectorToPixel, VectorToPixel));
+            dc.DrawLine(CoordGridPen,
+                new Point(VectorToPixel, 0),
+                new Point(VectorToPixel, 2 * VectorToPixel));
         }
 
         boundingBox = new Range<int>((int)minX, (int)maxX, (int)minY, (int)maxY);
         return dv;
     }
+
+    private static Point GazeToPixels(VarjoRecord r) => new(
+        (1.0 + r.GazeForwardX) * VectorToPixel,
+        (1.0 - r.GazeForwardY) * VectorToPixel);
 }

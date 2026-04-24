@@ -7,7 +7,7 @@
         xmlns:hlp="clr-namespace:CreanexDataVis.Helpers"
         xmlns:conv="clr-namespace:CreanexDataVis.Converters"
         mc:Ignorable="d"
-        Title="{Binding Title}"
+        Title="Creanex Data Visualization"
         Icon="/Assets/Images/icon.png"
         Height="722"
         Width="1200"

@@ -9,6 +9,7 @@ public interface IMediaPlayerService
     event EventHandler<double>? OnProgressChanged;
     event EventHandler? OnStopped;
     bool IsPlaying { get; }
+    bool IsLoaded { get; }
     void Load(Uri source);
     void Play(double fromTime); // seconds
     void Pause();
@@ -21,6 +22,7 @@ public class MediaPlayerService : IMediaPlayerService
     public event EventHandler? OnStopped;
 
     public bool IsPlaying { get; private set; } = false;
+    public bool IsLoaded { get; private set; } = false;
 
     public MediaPlayerService(MediaElement element)
     {
@@ -87,5 +89,7 @@ public class MediaPlayerService : IMediaPlayerService
     {
         _mediaElement.Pause();
         _mediaElement.MediaOpened -= OnMediaOpened;
+
+        IsLoaded = true;
     }
 }

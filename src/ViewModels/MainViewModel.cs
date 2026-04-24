@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -9,9 +10,6 @@ namespace CreanexDataVis.ViewModels;
 
 internal partial class MainViewModel : ObservableObject
 {
-    [ObservableProperty]
-    public partial string Title { get; set; } = MainTitle;
-
     [ObservableProperty]
     public partial FrameworkElement? Timeline { get; set; }
 
@@ -25,7 +23,7 @@ internal partial class MainViewModel : ObservableObject
     public partial double PlaybackTime { get; set; } = 0;   // seconds
 
     [ObservableProperty]
-    public partial Transform GazePointPosition { get; set; } = Services.GazePointLocationProvider.DefaultGazePointTransform;
+    public partial Transform GazePointPosition { get; set; } = Services.GazePointTranslationProvider.DefaultGazePointTransform;
 
     [ObservableProperty]
     public partial bool IsPlaybackEnabled { get; set; } = false;
@@ -59,8 +57,8 @@ internal partial class MainViewModel : ObservableObject
                 TimelineScrollX = x - 0.05 * TimelineWidth;
             }
 
-            if (_gazePointLocationProvider != null)
-                GazePointPosition = _gazePointLocationProvider.Get(PlaybackTime + _timelineOffset);
+            if (_gazePointTranslationProvider != null)
+                GazePointPosition = _gazePointTranslationProvider.Get(PlaybackTime + _timelineOffset);
         };
         _mediaPlayerService.OnStopped += (s, e) =>
         {
@@ -72,7 +70,6 @@ internal partial class MainViewModel : ObservableObject
 
     // Internal
 
-    readonly static string MainTitle = "Creanex Data Visualization";
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
 
@@ -80,7 +77,7 @@ internal partial class MainViewModel : ObservableObject
 
     Services.TimelineDataParser? _timelineParser;
     Services.VarjoDataParser? _varjoParser;
-    Services.GazePointLocationProvider? _gazePointLocationProvider;
+    Services.GazePointTranslationProvider? _gazePointTranslationProvider;
 
     double _timelineOffset;
     Point _gazePlotOffset;
@@ -90,7 +87,7 @@ internal partial class MainViewModel : ObservableObject
     {
         var ofd = new OpenFileDialog()
         {
-            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+            Filter = "CSV files (*.csv)|MixerEventLog*.csv|All files (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == true)
@@ -104,12 +101,10 @@ internal partial class MainViewModel : ObservableObject
                 if (canvas == null)
                 {
                     Timeline = null;
-                    Title = MainTitle;
                     return;
                 }
 
                 Timeline = canvas;
-                Title = $"{MainTitle} - {System.IO.Path.GetFileName(ofd.FileName)}";
 
                 if (canvas.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Line timeMark)
                 {
@@ -125,15 +120,10 @@ internal partial class MainViewModel : ObservableObject
                     timeMark.SetBinding(System.Windows.Shapes.Line.X2Property, xBinding);
                 }
 
-                canvas.MouseLeftButtonDown += (s, e) =>
-                {
-                    e.Handled = true;
-                    var pos = e.GetPosition(canvas);
-                    PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
-                };
+                canvas.MouseLeftButtonDown += TimelineCanvas_MouseLeftButtonDown;
 
                 if (_varjoParser?.Records != null)
-                    _gazePointLocationProvider = new Services.GazePointLocationProvider(
+                    _gazePointTranslationProvider = new Services.GazePointTranslationProvider(
                         _timelineParser.Records,
                         _varjoParser.Records,
                         _gazePlotOffset);
@@ -146,7 +136,7 @@ internal partial class MainViewModel : ObservableObject
     {
         var ofd = new OpenFileDialog()
         {
-            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+            Filter = "CSV files (*.csv)|VarjoEyeTracking*.csv|All files (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == true)
@@ -158,7 +148,6 @@ internal partial class MainViewModel : ObservableObject
                 var canvas = renderer.Create(_varjoParser.Records, out _gazePlotOffset);
 
                 GazePlot = canvas;
-                Title = $"{MainTitle} - {System.IO.Path.GetFileName(ofd.FileName)}";
 
                 if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
                 {
@@ -173,7 +162,7 @@ internal partial class MainViewModel : ObservableObject
                 }
 
                 if (_timelineParser?.Records != null)
-                    _gazePointLocationProvider = new Services.GazePointLocationProvider(_timelineParser.Records, _varjoParser.Records, _gazePlotOffset);
+                    _gazePointTranslationProvider = new Services.GazePointTranslationProvider(_timelineParser.Records, _varjoParser.Records, _gazePlotOffset);
             }
         }
     }
@@ -208,5 +197,13 @@ internal partial class MainViewModel : ObservableObject
             IsPlaying = true;
             TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
+    }
+
+    private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var canvas = sender as Canvas;
+        e.Handled = true;
+        var pos = e.GetPosition(canvas);
+        PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
     }
 }
