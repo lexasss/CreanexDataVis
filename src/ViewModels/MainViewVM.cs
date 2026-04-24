@@ -49,7 +49,7 @@ internal partial class MainViewVM : ObservableObject
         {
             PlaybackTime = e + VideoDelay;
 
-            var x = PlaybackTime * 1000 * Services.TimelineRenderer.MsToPixel;
+            var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
             if (TimelineScrollX < x - 0.8 * TimelineWidth)
             {
                 TimelineScrollX = x - 0.8 * TimelineWidth;
@@ -122,7 +122,7 @@ internal partial class MainViewVM : ObservableObject
                 {
                     e.Handled = true;
                     var pos = e.GetPosition(canvas);
-                    PlaybackTime = TimeSpan.FromMilliseconds(pos.X / Services.TimelineRenderer.MsToPixel).TotalSeconds;
+                    PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
                 };
             }
         }
@@ -202,8 +202,7 @@ internal partial class MainViewVM : ObservableObject
         if (varjoRecord == null)
             return new TranslateTransform(-100, 0);
 
-        var x = (1.0 + varjoRecord.GazeForwardX) * Services.GazePlotRenderer.MsToPixel;
-        var y = (1.0 + varjoRecord.GazeForwardY) * Services.GazePlotRenderer.MsToPixel;
-        return new TranslateTransform(x - _gazePlotOffset.X, y - _gazePlotOffset.Y);
+        var pt = Services.GazePlotRenderer.GazeToPixels(varjoRecord);
+        return new TranslateTransform(pt.X - _gazePlotOffset.X, pt.Y - _gazePlotOffset.Y);
     }
 }

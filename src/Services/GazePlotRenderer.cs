@@ -30,7 +30,9 @@ internal class GazePlotRenderer
         private readonly VisualCollection _children;
     }
 
-    public const double MsToPixel = 800;   // scale
+    public static Point GazeToPixels(VarjoRecord r) => new(
+        (1.0 + r.GazeForwardX) * VectorToPixel,
+        (1.0 + r.GazeForwardY) * VectorToPixel);
 
     public GazePlotRenderer()
     {
@@ -101,6 +103,8 @@ internal class GazePlotRenderer
     const int Margin = 8;           // pixels
     const int GazeMarkSize = 10;    // pixels
 
+    const double VectorToPixel = 800;   // scale
+
     readonly Pen CoordGridPen = new(Brushes.Black, 2);
     readonly Brush GazeMarkBrush = Brushes.Red;
 
@@ -110,7 +114,7 @@ internal class GazePlotRenderer
             maxX = double.MinValue, 
             minY = double.MaxValue, 
             maxY = double.MinValue;
-        double prevX = 0, prevY = 0;
+        Point prev = new();
 
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
@@ -143,24 +147,21 @@ internal class GazePlotRenderer
                     continue;
                 }
 
-                var x = (1.0 + r.GazeForwardX) * MsToPixel;
-                var y = (1.0 + r.GazeForwardY) * MsToPixel;
-                if (x != prevX || y != prevY)
+                var pt = GazeToPixels(r);
+                if (pt.X != prev.X || pt.Y != prev.Y)
                 {
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
+                    if (pt.X < minX) minX = pt.X;
+                    if (pt.X > maxX) maxX = pt.X;
+                    if (pt.Y < minY) minY = pt.Y;
+                    if (pt.Y > maxY) maxY = pt.Y;
 
-                    prevX = x;
-                    prevY = y;
-
-                    points.Add(new Point(x, y));
+                    prev = pt;
+                    points.Add(pt);
                 }
             }
 
-            dc.DrawLine(CoordGridPen, new Point(0, MsToPixel), new Point(2 * MsToPixel, MsToPixel));
-            dc.DrawLine(CoordGridPen, new Point(MsToPixel, 0), new Point(MsToPixel, 2 * MsToPixel));
+            dc.DrawLine(CoordGridPen, new Point(0, VectorToPixel), new Point(2 * VectorToPixel, VectorToPixel));
+            dc.DrawLine(CoordGridPen, new Point(VectorToPixel, 0), new Point(VectorToPixel, 2 * VectorToPixel));
         }
 
         boundingBox = new Range<int>((int)minX, (int)maxX, (int)minY, (int)maxY);

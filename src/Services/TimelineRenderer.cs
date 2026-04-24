@@ -27,9 +27,10 @@ internal class TimelineRenderer
         private readonly VisualCollection _children;
     }
 
-    public const double MsToPixel = 0.1;
-
     public bool CropBlankPeriods { get; set; } = true;
+
+    public static double SecondsToPixels(double seconds) => seconds * 1000 * MsToPixel;
+    public static double PixelsToSeconds(double pixels) => pixels / 1000 / MsToPixel;
 
     public ImageSource? Render(TimelineRecord[] records)
     {
@@ -118,8 +119,10 @@ internal class TimelineRenderer
     const int Margin = 5;           // pixels
     const int TimeInterval = 1000;  // ms
 
-    readonly double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
-    readonly double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug reported at 2012 already!)
+    const double MsToPixel = 0.1;
+    const double TreeIdFontSize = 9; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug since 2012)
+    const double TimelineFontSize = 9.5; // avoid sizes 10-11, as these are not printed at distances x >= 11000 (.NET bug since 2012)
+
     readonly Typeface FontFamily = new("Segoe UI");
     readonly Brush FontBrush = Brushes.Black;
     readonly Brush BackgroundBrush = Brushes.WhiteSmoke;
