@@ -1,6 +1,7 @@
 ﻿using CreanexDataVis.Services;
 using CreanexDataVis.ViewModels;
 using System.Windows;
+using System.Windows.Input;
 
 namespace CreanexDataVis;
 
@@ -13,5 +14,18 @@ public partial class MainWindow : Window
         var mediaService = new MediaPlayerService(VideoPlayer);
 
         DataContext = new MainViewModel(mediaService);
+    }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space)
+        {
+            if (DataContext is MainViewModel vm &&
+                vm.TogglePlayVideoCommand.CanExecute(null))
+            {
+                vm.TogglePlayVideoCommand.Execute(null);
+                e.Handled = true; // prevent TextBox from inserting space
+            }
+        }
     }
 }

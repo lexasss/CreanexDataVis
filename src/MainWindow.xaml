@@ -12,7 +12,8 @@
         Height="722"
         Width="1200"
         MinHeight="620"
-        MinWidth="496">
+        MinWidth="496"
+        PreviewKeyDown="Window_PreviewKeyDown">
     
     <Window.InputBindings>
         <KeyBinding 
@@ -55,7 +56,7 @@
                         IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
                 <Label Content="Delaying"/>
                 <TextBox Width="40"
-                         Text="{Binding VideoDelay}"/>
+                         Text="{Binding VideoDelay, UpdateSourceTrigger=PropertyChanged}"/>
                 <Label Content="seconds"/>
                 <Separator/>
                 <Button Style="{StaticResource ToolbarIconButton}"
@@ -83,21 +84,22 @@
                         hlp:ScrollViewerProperties.EnableExtraBindings="True">
             <!--Image x:Name="imgTimeline"/-->
         </ScrollViewer>
-        <StackPanel Grid.Row="1">
+        <StackPanel Grid.Row="1"
+                    HorizontalAlignment="Left">
             <StackPanel.Resources>
                 <Style TargetType="Label">
                     <Setter Property="FontSize" Value="12"/>
                     <Setter Property="Margin" Value="2"/>
-                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                    <Setter Property="Background" Value="#99FFFFFF"/>
                 </Style>
             </StackPanel.Resources>
-            <Label>Harvester events</Label>
+            <Label Content="Driving / grabbing"></Label>
             <Label>Left Window</Label>
             <Label>Front Window</Label>
             <Label>Right Window</Label>
             <Label>TDA Screen</Label>
             <Label>Harvester Head</Label>
-            <Label>Target Tree</Label>
+            <Label>Tree (+ID)</Label>
         </StackPanel>
 
         <Grid Grid.Row="2">
