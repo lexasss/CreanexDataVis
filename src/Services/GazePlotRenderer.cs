@@ -66,17 +66,28 @@ internal class GazePlotRenderer
         var stride = boundingBox.Width * 4;
         var pixels = new byte[stride * boundingBox.Height];
 
-        bitmap.CopyPixels(new Int32Rect(
-                boundingBox.Left,
-                boundingBox.Top,
-                boundingBox.Width,
-                boundingBox.Height),
-            pixels, stride, 0);
+        ImageSource source;
 
-        var source = BitmapSource.Create(boundingBox.Width, boundingBox.Height,
-            96, 96,
-            PixelFormats.Pbgra32,
-            null, pixels, stride);
+        try
+        {
+            // Clipping
+            bitmap.CopyPixels(new Int32Rect(
+                    boundingBox.Left,
+                    boundingBox.Top,
+                    boundingBox.Width,
+                    boundingBox.Height),
+                pixels, stride, 0);
+
+            source = BitmapSource.Create(boundingBox.Width, boundingBox.Height,
+                96, 96,
+                PixelFormats.Pbgra32,
+                null, pixels, stride);
+        }
+        catch
+        {
+            source = CreateWarning();
+            boundingBox = new Range<int>(0, WarningWidth, 0, WarningHeight);
+        }
 
         var canvas = new Canvas
         {
@@ -106,9 +117,14 @@ internal class GazePlotRenderer
     const int GazeMarkSize = 10;    // pixels
 
     const double VectorToPixel = 400;   // scale
+    const double WarningFontSize = 12;
+    const int WarningWidth = 250;
+    const int WarningHeight = 50;
 
     readonly Pen CoordGridPen = new(Brushes.DarkGray, 2);
     readonly Brush GazeMarkBrush = Brushes.Black;
+    readonly Typeface WarningFontFamily = new("Segoe UI");
+    readonly Brush WarningFontBrush = Brushes.Black;
 
     private DrawingVisual DrawPath(VarjoRecord[] records, out Range<int> boundingBox)
     {
@@ -181,6 +197,37 @@ internal class GazePlotRenderer
     }
 
     private static Point GazeToPixels(VarjoRecord r) => new(
-        (1.0 + r.GazeForwardX) * VectorToPixel,
-        (1.0 - r.GazeForwardY) * VectorToPixel);
+        (1.0 + r.GazeForwardZWorld) * VectorToPixel,
+        (1.0 - r.GazeForwardYWorld) * VectorToPixel);
+
+    private BitmapSource CreateWarning()
+    {
+        var dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow);
+
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawText(
+                new FormattedText(
+                    $"Invalid data",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight,
+                    WarningFontFamily,
+                    WarningFontSize,
+                    WarningFontBrush,
+                    dpi.PixelsPerDip),
+                new Point(20, 20));
+        }
+
+        var bitmap = new RenderTargetBitmap(
+            WarningWidth,
+            WarningHeight,
+            dpi.PixelsPerInchX,
+            dpi.PixelsPerInchY,
+            PixelFormats.Pbgra32);
+
+        bitmap.Render(dv);
+
+        return bitmap;
+    }
 }
