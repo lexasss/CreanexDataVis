@@ -4,11 +4,11 @@ using System.Windows.Media;
 
 namespace CreanexDataVis.Services;
 
-internal class GazePointTranslationProvider
+internal class GazePointTranslationService
 {
     public readonly static Transform DefaultGazePointTransform = new TranslateTransform(-100, 0);
 
-    public GazePointTranslationProvider(TimelineRecord[] timelineRecords, VarjoRecord[] varjoRecords, Point gazePlotOffset)
+    public GazePointTranslationService(TimelineRecord[] timelineRecords, VarjoRecord[] varjoRecords, Point gazePlotOffset)
     {
         _timelineRecords = timelineRecords;
         _varjoRecords = varjoRecords;
@@ -17,7 +17,7 @@ internal class GazePointTranslationProvider
         _startTime = _timelineRecords[0].Timestamp;
     }
 
-    public Transform Get(double timelineSeconds)
+    public Transform GetPosition(double timelineSeconds)
     {
         if (timelineSeconds < _lastSearchTimeline)
             Reset();

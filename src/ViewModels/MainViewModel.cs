@@ -23,7 +23,7 @@ internal partial class MainViewModel : ObservableObject
     public partial double PlaybackTime { get; set; } = 0;   // seconds
 
     [ObservableProperty]
-    public partial Transform GazePointPosition { get; set; } = Services.GazePointTranslationProvider.DefaultGazePointTransform;
+    public partial Transform GazePointPosition { get; set; } = Services.GazePointTranslationService.DefaultGazePointTransform;
 
     [ObservableProperty]
     public partial bool IsPlaybackEnabled { get; set; } = false;
@@ -57,8 +57,8 @@ internal partial class MainViewModel : ObservableObject
                 TimelineScrollX = x - 0.05 * TimelineWidth;
             }
 
-            if (_gazePointTranslationProvider != null)
-                GazePointPosition = _gazePointTranslationProvider.Get(PlaybackTime + _timelineOffset);
+            if (_gazePointTranslationService != null)
+                GazePointPosition = _gazePointTranslationService.GetPosition(PlaybackTime + _timelineOffset);
         };
         _mediaPlayerService.OnStopped += (s, e) =>
         {
@@ -77,7 +77,7 @@ internal partial class MainViewModel : ObservableObject
 
     Services.TimelineDataParser? _timelineParser;
     Services.VarjoDataParser? _varjoParser;
-    Services.GazePointTranslationProvider? _gazePointTranslationProvider;
+    Services.GazePointTranslationService? _gazePointTranslationService;
 
     double _timelineOffset;
     Point _gazePlotOffset;
@@ -101,7 +101,7 @@ internal partial class MainViewModel : ObservableObject
     {
         var ofd = new OpenFileDialog()
         {
-            Filter = "CSV files (*.csv)|MixerEventLog*.csv|All files (*.*)|*.*"
+            Filter = "Creanex-Mixer files (*.csv)|MixerEventLog*.csv|All files (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == true)
@@ -137,7 +137,7 @@ internal partial class MainViewModel : ObservableObject
                 canvas.MouseLeftButtonDown += TimelineCanvas_MouseLeftButtonDown;
 
                 if (_varjoParser?.Records != null)
-                    _gazePointTranslationProvider = new Services.GazePointTranslationProvider(
+                    _gazePointTranslationService = new Services.GazePointTranslationService(
                         _timelineParser.Records,
                         _varjoParser.Records,
                         _gazePlotOffset);
@@ -150,7 +150,7 @@ internal partial class MainViewModel : ObservableObject
     {
         var ofd = new OpenFileDialog()
         {
-            Filter = "CSV files (*.csv)|VarjoEyeTracking*.csv|All files (*.*)|*.*"
+            Filter = "Creanex-Varjo files (*.csv)|VarjoEyeTracking*.csv|All files (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == true)
@@ -176,7 +176,10 @@ internal partial class MainViewModel : ObservableObject
                 }
 
                 if (_timelineParser?.Records != null)
-                    _gazePointTranslationProvider = new Services.GazePointTranslationProvider(_timelineParser.Records, _varjoParser.Records, _gazePlotOffset);
+                    _gazePointTranslationService = new Services.GazePointTranslationService(
+                        _timelineParser.Records,
+                        _varjoParser.Records,
+                        _gazePlotOffset);
             }
         }
     }
