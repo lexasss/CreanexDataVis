@@ -54,7 +54,8 @@
                         Command="{Binding LoadVideoCommand}"
                         IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
                 <Label Content="Delaying"/>
-                <TextBox Width="40" Text="{Binding VideoDelay}"/>
+                <TextBox Width="40"
+                         Text="{Binding VideoDelay}"/>
                 <Label Content="seconds"/>
                 <Separator/>
                 <Button Style="{StaticResource ToolbarIconButton}"

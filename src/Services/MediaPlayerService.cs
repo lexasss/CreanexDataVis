@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
@@ -10,6 +11,7 @@ public interface IMediaPlayerService
     event EventHandler? OnStopped;
     bool IsPlaying { get; }
     bool IsLoaded { get; }
+    string? Filename { get; }
     void Load(Uri source);
     void Play(double fromTime); // seconds
     void Pause();
@@ -23,6 +25,7 @@ public class MediaPlayerService : IMediaPlayerService
 
     public bool IsPlaying { get; private set; } = false;
     public bool IsLoaded { get; private set; } = false;
+    public string? Filename { get; private set; } = null;
 
     public MediaPlayerService(MediaElement element)
     {
@@ -43,6 +46,8 @@ public class MediaPlayerService : IMediaPlayerService
 
     public void Load(Uri source)
     {
+        Filename = source.LocalPath;
+
         _mediaElement.Source = source;
         _mediaElement.MediaOpened += OnMediaOpened;
         _mediaElement.Play();

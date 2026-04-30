@@ -82,6 +82,20 @@ internal partial class MainViewModel : ObservableObject
     double _timelineOffset;
     Point _gazePlotOffset;
 
+    #region OnChange handlers for observable properties
+
+    partial void OnVideoDelayChanged(double value)
+    {
+        if (_mediaPlayerService.Filename != null)
+        {
+            Services.VideoDelayStorage.SetDelay(_mediaPlayerService.Filename, VideoDelay);
+        }
+    }
+
+    #endregion
+
+    #region Commands
+
     [RelayCommand]
     private void LoadCreanexData()
     {
@@ -179,6 +193,11 @@ internal partial class MainViewModel : ObservableObject
         {
             _mediaPlayerService.Load(new Uri(ofd.FileName));
             IsPlaybackEnabled = true;
+
+            if (Services.VideoDelayStorage.TryGetDelay(ofd.FileName, out double videoDelay))
+            {
+                VideoDelay = videoDelay;
+            }
         }
     }
 
@@ -198,6 +217,8 @@ internal partial class MainViewModel : ObservableObject
             TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
     }
+
+    #endregion
 
     private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
