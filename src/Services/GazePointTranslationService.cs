@@ -1,12 +1,14 @@
 ﻿using CreanexDataVis.Models;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace CreanexDataVis.Services;
 
 internal class GazePointTranslationService
 {
     public readonly static Transform DefaultGazePointTransform = new TranslateTransform(-100, 0);
+    public readonly static TranslateTransform3D DefaultGazePoint3DTransform = new TranslateTransform3D(-100, 0, 0);
 
     public GazePointTranslationService(TimelineRecord[] timelineRecords, VarjoRecord[] varjoRecords, Point gazePlotOffset)
     {
@@ -17,7 +19,7 @@ internal class GazePointTranslationService
         _startTime = _timelineRecords[0].Timestamp;
     }
 
-    public Transform GetPosition(double timelineSeconds)
+    public VarjoRecord? GetGazeDataAt(double timelineSeconds)
     {
         if (timelineSeconds < _lastSearchTimeline)
             Reset();
@@ -42,7 +44,7 @@ internal class GazePointTranslationService
         }
 
         if (timelineRecord == null)
-            return DefaultGazePointTransform;
+            return null;
 
         var timestamp = timelineRecord.Timestamp;
 
@@ -61,12 +63,26 @@ internal class GazePointTranslationService
             i++;
         }
 
+        return varjoRecord;
+    }
+
+    public Transform GetPosition2D(VarjoRecord? varjoRecord)
+    {
         if (varjoRecord == null)
             return DefaultGazePointTransform;
 
         // Return the translation object for the gaze point
         var pt = GazePlotRenderer.GetGazeMarkLocation(varjoRecord);
         return new TranslateTransform(pt.X - _gazePlotOffset.X, pt.Y - _gazePlotOffset.Y);
+    }
+
+    public static TranslateTransform3D GetPosition3D(VarjoRecord? varjoRecord)
+    {
+        if (varjoRecord == null)
+            return DefaultGazePoint3DTransform;
+
+        var pt = GazePlotRenderer.GetGazeMarkLocation(varjoRecord);
+        return new TranslateTransform3D(GazePlot3DRenderer.GetPoint3D(varjoRecord));
     }
 
     public void Reset()

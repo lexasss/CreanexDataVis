@@ -1,5 +1,4 @@
-﻿using CreanexDataVis.Services;
-using CreanexDataVis.ViewModels;
+﻿using CreanexDataVis.ViewModels;
 using System.Windows;
 using System.Windows.Input;
 
@@ -11,9 +10,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        var mediaService = new MediaPlayerService(VideoPlayer);
+        var mediaService = new Services.MediaPlayerService(VideoPlayer);
+        var gazePlot3dRenderer = new Services.GazePlot3DRenderer();
 
-        DataContext = new MainViewModel(mediaService);
+        DataContext = new MainViewModel(mediaService, gazePlot3dRenderer);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

@@ -197,8 +197,8 @@ internal class GazePlotRenderer
     }
 
     private static Point GazeToPixels(VarjoRecord r) => new(
-        (1.0 + r.GazeForwardZWorld) * VectorToPixel,
-        (1.0 - r.GazeForwardYWorld) * VectorToPixel);
+        (1.0 + r.GazeForwardX) * VectorToPixel,
+        (1.0 - r.GazeForwardY) * VectorToPixel);
 
     private BitmapSource CreateWarning()
     {

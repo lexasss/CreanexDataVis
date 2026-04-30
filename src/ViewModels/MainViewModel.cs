@@ -1,10 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HelixToolkit.Geometry;
+using HelixToolkit.SharpDX;
+using HelixToolkit.Wpf.SharpDX;
 using Microsoft.Win32;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace CreanexDataVis.ViewModels;
 
@@ -40,33 +45,37 @@ internal partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string TogglePlayVideoCommandLabel { get; set; } = VideoCommandPlayLabel;
 
-    public MainViewModel(Services.IMediaPlayerService mediaPlayerService)
+    [ObservableProperty]
+    //[NotifyPropertyChangedFor(nameof(LineThicknessMaximum))]
+    public partial LineGeometry3D? GazePlot3D { get; private set; }
+
+    public MainViewModel(
+        Services.IMediaPlayerService mediaPlayerService,
+        Services.GazePlot3DRenderer gazePlot3DRenderer)
     {
+        _gazePlot3DRenderer = gazePlot3DRenderer;
         _mediaPlayerService = mediaPlayerService;
-        _mediaPlayerService.OnProgressChanged += (s, e) =>
-        {
-            PlaybackTime = e + VideoDelay;
+        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
+        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
 
-            var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
-            if (TimelineScrollX < x - 0.8 * TimelineWidth)
-            {
-                TimelineScrollX = x - 0.8 * TimelineWidth;
-            }
-            else if (TimelineScrollX > x - 0.05 * TimelineWidth)
-            {
-                TimelineScrollX = x - 0.05 * TimelineWidth;
-            }
-
-            if (_gazePointTranslationService != null)
-                GazePointPosition = _gazePointTranslationService.GetPosition(PlaybackTime + _timelineOffset);
-        };
-        _mediaPlayerService.OnStopped += (s, e) =>
-        {
-            PlaybackTime = 0;
-            IsPlaying = false;
-            TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
-        };
+        var b1 = new MeshBuilder();
+        b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
+        _gazePlot3DHead = b1.ToMeshGeometry3D();
     }
+
+    // Observables
+
+    [ObservableProperty]
+    EffectsManager _gazePlotEffectsManager = new DefaultEffectsManager();
+
+    [ObservableProperty]
+    HelixToolkit.SharpDX.MeshGeometry3D _gazePlot3DHead;
+
+    [ObservableProperty]
+    Transform3D _gazePlot3DHeadTransform = Services.GazePointTranslationService.DefaultGazePoint3DTransform;
+
+    [ObservableProperty]
+    PhongMaterial _gazePlot3DHeadMaterial = PhongMaterials.Red;
 
     // Internal
 
@@ -74,6 +83,7 @@ internal partial class MainViewModel : ObservableObject
     readonly static string VideoCommandPauseLabel = "⏸";
 
     readonly Services.IMediaPlayerService _mediaPlayerService;
+    readonly Services.GazePlot3DRenderer _gazePlot3DRenderer;
 
     Services.TimelineDataParser? _timelineParser;
     Services.VarjoDataParser? _varjoParser;
@@ -163,6 +173,8 @@ internal partial class MainViewModel : ObservableObject
 
                 GazePlot = canvas;
 
+                GazePlot3D = _gazePlot3DRenderer.Create(_varjoParser.Records);
+
                 if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
                 {
                     var positionBinding = new Binding(nameof(GazePointPosition))
@@ -229,5 +241,34 @@ internal partial class MainViewModel : ObservableObject
         e.Handled = true;
         var pos = e.GetPosition(canvas);
         PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
+    }
+
+    private void MediaPlayerService_OnProgressChanged(object? sender, double e)
+    {
+        PlaybackTime = e + VideoDelay;
+
+        var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
+        if (TimelineScrollX < x - 0.8 * TimelineWidth)
+        {
+            TimelineScrollX = x - 0.8 * TimelineWidth;
+        }
+        else if (TimelineScrollX > x - 0.05 * TimelineWidth)
+        {
+            TimelineScrollX = x - 0.05 * TimelineWidth;
+        }
+
+        if (_gazePointTranslationService != null)
+        {
+            var currentGazeData = _gazePointTranslationService.GetGazeDataAt(PlaybackTime + _timelineOffset);
+            GazePointPosition = _gazePointTranslationService.GetPosition2D(currentGazeData);
+            GazePlot3DHeadTransform = Services.GazePointTranslationService.GetPosition3D(currentGazeData);
+        }
+    }
+
+    private void MediaPlayerService_OnStopped(object? sender, EventArgs e)
+    {
+        PlaybackTime = 0;
+        IsPlaying = false;
+        TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
     }
 }

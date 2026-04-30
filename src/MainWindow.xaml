@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:CreanexDataVis"
         xmlns:hlp="clr-namespace:CreanexDataVis.Helpers"
         xmlns:conv="clr-namespace:CreanexDataVis.Converters"
+        xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
         mc:Ignorable="d"
         Title="Creanex Data Visualization"
         Icon="/Assets/Images/icon.png"
@@ -104,20 +105,49 @@
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+            
             <MediaElement x:Name="VideoPlayer" Grid.Column="0"
                         MinWidth="480"
                         MinHeight="320"
                         Stretch="Uniform"
                         LoadedBehavior="Manual"
                         UnloadedBehavior="Manual"/>
+            
             <ScrollViewer Grid.Column="1"
                         Content="{Binding GazePlot}"
                         HorizontalScrollBarVisibility="Auto"
                         VerticalScrollBarVisibility="Auto"
-                        VerticalAlignment="Top">
+                        VerticalAlignment="Top"/>
+
+            <ScrollViewer Grid.Column="2">
+                <hx:Viewport3DX EffectsManager="{Binding GazePlotEffectsManager}" 
+                                ShowCoordinateSystem="True"
+                                ShowViewCube="False"
+                                CoordinateSystemHorizontalPosition="0.8">
+                    <hx:Viewport3DX.Camera>
+                        <hx:PerspectiveCamera Position="2,0,0"
+                                              LookDirection="-2,0,0"
+                                              UpDirection="0,1,0"/>
+                    </hx:Viewport3DX.Camera>
+                    <hx:DirectionalLight3D Direction="-1,0,0" Color="White"/>
+                    <hx:AmbientLight3D Color="Red" />
+                    
+                    <hx:LineGeometryModel3D FixedSize="True"
+                                    Geometry="{Binding GazePlot3D}"
+                                    IsRendering="True"
+                                    Smoothness="2.0"
+                                    Thickness="0.5"
+                                    Color="Yellow" />
+                    <hx:MeshGeometryModel3D 
+                        Geometry="{Binding GazePlot3DHead}"
+                        Material="{Binding GazePlot3DHeadMaterial}"
+                        Transform="{Binding GazePlot3DHeadTransform}">
+                    </hx:MeshGeometryModel3D>
+                </hx:Viewport3DX>
             </ScrollViewer>
         </Grid>
     </Grid>
