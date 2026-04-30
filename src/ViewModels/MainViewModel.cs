@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HelixToolkit;
 using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;

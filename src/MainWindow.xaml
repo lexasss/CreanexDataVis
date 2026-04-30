@@ -141,7 +141,7 @@
                                     IsRendering="True"
                                     Smoothness="2.0"
                                     Thickness="0.5"
-                                    Color="Yellow" />
+                                    Color="White" />
                     <hx:MeshGeometryModel3D 
                         Geometry="{Binding GazePlot3DHead}"
                         Material="{Binding GazePlot3DHeadMaterial}"
