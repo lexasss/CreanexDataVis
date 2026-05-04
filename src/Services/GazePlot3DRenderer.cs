@@ -1,6 +1,5 @@
 ﻿using CreanexDataVis.Helpers;
 using CreanexDataVis.Models;
-using HelixToolkit;
 using HelixToolkit.SharpDX;
 using System.Numerics;
 using System.Windows.Media.Media3D;
@@ -26,16 +25,15 @@ internal class GazePlot3DRenderer
         var result = builder.ToLineGeometry3D(true);
         result.Colors = [];
 
-        var count = result.Indices?.Count() ?? 0;
-        float c = 0.00392157f;  // 1/255
+        var count = result.Indices?.Count ?? 0;
         for (int i = 0; i < count; i++)
         {
             var hue = 360.0 * i / count;
             var color = ColorHelper.FromHsl(hue, 1, 0.4);
             result.Colors.Add(new HelixToolkit.Maths.Color4(
-                c * color.R,
-                c * color.G,
-                c * color.B,
+                ByteToNorm * color.R,
+                ByteToNorm * color.G,
+                ByteToNorm * color.B,
                 1f));
         }
 
@@ -45,10 +43,14 @@ internal class GazePlot3DRenderer
     public static Vector3 GetPoint(VarjoRecord record) => new(
                     (float)record.GazeForwardXWorld,
                     (float)record.GazeForwardYWorld,
-                    (float)record.GazeForwardZWorld);
+                    (float)-record.GazeForwardZWorld);
 
     public static Vector3D GetPoint3D(VarjoRecord record) => new(
                     (float)record.GazeForwardXWorld,
                     (float)record.GazeForwardYWorld,
-                    (float)record.GazeForwardZWorld);
+                    (float)-record.GazeForwardZWorld);
+
+    // Internal
+
+    const float ByteToNorm = 0.00392157f;  // 1/255
 }

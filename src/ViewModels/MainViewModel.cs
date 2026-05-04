@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HelixToolkit;
 using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
 using Microsoft.Win32;
+using System.IO;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +16,14 @@ namespace CreanexDataVis.ViewModels;
 
 internal partial class MainViewModel : ObservableObject
 {
+    public partial class ExpandableColumnProps : ObservableObject
+    {
+        [ObservableProperty]
+        GridLength _width = new GridLength(1, GridUnitType.Star);
+        [ObservableProperty]
+        bool _isExpanded = false;
+    }
+
     [ObservableProperty]
     public partial FrameworkElement? Timeline { get; set; }
 
@@ -62,6 +70,8 @@ internal partial class MainViewModel : ObservableObject
         var b1 = new MeshBuilder();
         b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
         _gazePlot3DHead = b1.ToMeshGeometry3D();
+
+        _visColumnProps = [VisColumn1, VisColumn2, VisColumn3];
     }
 
     // Observables
@@ -78,13 +88,25 @@ internal partial class MainViewModel : ObservableObject
     [ObservableProperty]
     PhongMaterial _gazePlot3DHeadMaterial = PhongMaterials.Red;
 
+    // Visualizations
+    [ObservableProperty]
+    ExpandableColumnProps _visColumn1 = new();
+    [ObservableProperty]
+    ExpandableColumnProps _visColumn2 = new();
+    [ObservableProperty]
+    ExpandableColumnProps _visColumn3 = new();
+
     // Internal
+
+    const int ExpandedColumnStarWidth = 3;
 
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
 
     readonly Services.IMediaPlayerService _mediaPlayerService;
     readonly Services.GazePlot3DRenderer _gazePlot3DRenderer;
+
+    readonly ExpandableColumnProps[] _visColumnProps;
 
     Services.TimelineDataParser? _timelineParser;
     Services.VarjoDataParser? _varjoParser;
@@ -108,112 +130,35 @@ internal partial class MainViewModel : ObservableObject
     #region Commands
 
     [RelayCommand]
-    private void LoadCreanexData()
+    private void LoadData()
     {
-        var ofd = new OpenFileDialog()
+        var ofd = new OpenFolderDialog()
         {
-            Filter = "Creanex-Mixer files (*.csv)|MixerEventLog*.csv|All files (*.*)|*.*"
+            Title = "Select a folder with Creanex and Varjo log files, and a video recording"
         };
 
         if (ofd.ShowDialog() == true)
         {
-            _timelineParser = new Services.TimelineDataParser(ofd.FileName);
-            if (_timelineParser.Records != null)
+            var folder = ofd.FolderName;
+
+            var creanexLogFiles = Directory.GetFiles(folder, "MixerEventLog*.csv");
+            if (creanexLogFiles.Length > 0)
             {
-                var renderer = new Services.TimelineRenderer();
-                var canvas = renderer.Create(_timelineParser.Records, out _timelineOffset);
-
-                if (canvas == null)
-                {
-                    Timeline = null;
-                    return;
-                }
-
-                Timeline = canvas;
-
-                if (canvas.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Line timeMark)
-                {
-                    var xBinding = new Binding(nameof(PlaybackTime))
-                    {
-                        Source = this,
-                        Mode = BindingMode.OneWay,
-                        Converter = new Converters.TimeToPixelConverter(),
-                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                    };
-
-                    timeMark.SetBinding(System.Windows.Shapes.Line.X1Property, xBinding);
-                    timeMark.SetBinding(System.Windows.Shapes.Line.X2Property, xBinding);
-                }
-
-                canvas.MouseLeftButtonDown += TimelineCanvas_MouseLeftButtonDown;
-
-                if (_varjoParser?.Records != null)
-                    _gazePointTranslationService = new Services.GazePointTranslationService(
-                        _timelineParser.Records,
-                        _varjoParser.Records,
-                        _gazePlotOffset);
+                LoadCreanexData(creanexLogFiles[0]);
             }
-        }
-    }
 
-    [RelayCommand]
-    private void LoadVarjoData()
-    {
-        var ofd = new OpenFileDialog()
-        {
-            Filter = "Creanex-Varjo files (*.csv)|VarjoEyeTracking*.csv|All files (*.*)|*.*"
-        };
-
-        if (ofd.ShowDialog() == true)
-        {
-            _varjoParser = new Services.VarjoDataParser(ofd.FileName);
-            if (_varjoParser.Records != null)
+            var varjoLogFiles = Directory.GetFiles(folder, "VarjoEyeTracking*.csv");
+            if (varjoLogFiles.Length > 0)
             {
-                var renderer = new Services.GazePlotRenderer();
-                var canvas = renderer.Create(_varjoParser.Records, out _gazePlotOffset);
-
-                GazePlot = canvas;
-
-                GazePlot3D = _gazePlot3DRenderer.Create(_varjoParser.Records);
-
-                if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
-                {
-                    var positionBinding = new Binding(nameof(GazePointPosition))
-                    {
-                        Source = this,
-                        Mode = BindingMode.OneWay,
-                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                    };
-
-                    gazeMark.SetBinding(UIElement.RenderTransformProperty, positionBinding);
-                }
-
-                if (_timelineParser?.Records != null)
-                    _gazePointTranslationService = new Services.GazePointTranslationService(
-                        _timelineParser.Records,
-                        _varjoParser.Records,
-                        _gazePlotOffset);
+                LoadVarjoData(varjoLogFiles[0]);
             }
-        }
-    }
 
-    [RelayCommand]
-    private void LoadVideo()
-    {
-        var ofd = new OpenFileDialog()
-        {
-            Filter = "Video files (*.mp4;*.avi)|*.mp4;*.avi|All files (*.*)|*.*"
-        };
-
-        if (ofd.ShowDialog() == true)
-        {
-            _mediaPlayerService.Load(new Uri(ofd.FileName));
-            IsPlaybackEnabled = true;
-
-            if (Services.VideoDelayStorage.TryGetDelay(ofd.FileName, out double videoDelay))
+            var videoFiles = Directory.GetFiles(folder, "*.mp4");
+            if (videoFiles.Length > 0)
             {
-                VideoDelay = videoDelay;
+                LoadVideo(videoFiles[0]);
             }
+            
         }
     }
 
@@ -234,7 +179,124 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
+
+    [RelayCommand]
+    private void ChangeVisColumnWidth(object column)
+    {
+        int index = int.Parse(column.ToString() ?? "");
+
+        bool isVisColumnSelectedAlready = !_visColumnProps[index].IsExpanded; // reversed, as the flag is toggled already
+
+        int i = 0;
+        foreach (var colProps in _visColumnProps)
+        {
+            if (i != index)
+            {
+                colProps.Width = new GridLength(1, GridUnitType.Star);
+                colProps.IsExpanded = false;
+            }
+            else
+            {
+                colProps.Width = new GridLength(isVisColumnSelectedAlready ? 1 : ExpandedColumnStarWidth, GridUnitType.Star);
+                colProps.IsExpanded = !isVisColumnSelectedAlready;
+            }
+            ++i;
+        }
+    }
+
     #endregion
+
+    private void LoadCreanexData(string filename)
+    {
+        if (!File.Exists(filename))
+            return;
+
+        _timelineParser = new Services.TimelineDataParser(filename);
+        if (_timelineParser.Records != null)
+        {
+            var renderer = new Services.TimelineRenderer();
+            var canvas = renderer.Create(_timelineParser.Records, out _timelineOffset);
+
+            if (canvas == null)
+            {
+                Timeline = null;
+                return;
+            }
+
+            Timeline = canvas;
+
+            if (canvas.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Line timeMark)
+            {
+                var xBinding = new Binding(nameof(PlaybackTime))
+                {
+                    Source = this,
+                    Mode = BindingMode.OneWay,
+                    Converter = new Converters.TimeToPixelConverter(),
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                };
+
+                timeMark.SetBinding(System.Windows.Shapes.Line.X1Property, xBinding);
+                timeMark.SetBinding(System.Windows.Shapes.Line.X2Property, xBinding);
+            }
+
+            canvas.MouseLeftButtonDown += TimelineCanvas_MouseLeftButtonDown;
+
+            if (_varjoParser?.Records != null)
+                _gazePointTranslationService = new Services.GazePointTranslationService(
+                    _timelineParser.Records,
+                    _varjoParser.Records,
+                    _gazePlotOffset);
+        }
+    }
+
+    private void LoadVarjoData(string filename)
+    {
+        if (!File.Exists(filename))
+            return;
+
+        _varjoParser = new Services.VarjoDataParser(filename);
+        if (_varjoParser.Records != null)
+        {
+            var renderer = new Services.GazePlotRenderer();
+            var canvas = renderer.Create(_varjoParser.Records, out _gazePlotOffset);
+
+            GazePlot = canvas;
+
+            GazePlot3D = _gazePlot3DRenderer.Create(_varjoParser.Records);
+
+            if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
+            {
+                var positionBinding = new Binding(nameof(GazePointPosition))
+                {
+                    Source = this,
+                    Mode = BindingMode.OneWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                };
+
+                gazeMark.SetBinding(UIElement.RenderTransformProperty, positionBinding);
+            }
+
+            if (_timelineParser?.Records != null)
+                _gazePointTranslationService = new Services.GazePointTranslationService(
+                    _timelineParser.Records,
+                    _varjoParser.Records,
+                    _gazePlotOffset);
+        }
+    }
+
+    private void LoadVideo(string filename)
+    {
+        if (!File.Exists(filename))
+            return;
+
+        _mediaPlayerService.Load(new Uri(filename));
+        IsPlaybackEnabled = true;
+
+        if (Services.VideoDelayStorage.TryGetDelay(filename, out double videoDelay))
+        {
+            VideoDelay = videoDelay;
+        }
+    }
 
     private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {

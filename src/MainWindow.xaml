@@ -42,20 +42,12 @@
         
         <ToolBarTray Grid.Row="0">
             <ToolBar>
-                <Label Content="Timeline:"/>
+                <Label Content="Data:"/>
                 <Button Style="{StaticResource ToolbarIconButton}"
                         Content="📂"
-                        Command="{Binding LoadCreanexDataCommand}"
+                        Command="{Binding LoadDataCommand}"
                         IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
-            </ToolBar>
-            
-            <ToolBar>
-                <Label Content="Video:"/>
-                <Button Style="{StaticResource ToolbarIconButton}"
-                        Content="📂"
-                        Command="{Binding LoadVideoCommand}"
-                        IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
-                <Label Content="Delaying"/>
+                <Label Content="Video delays"/>
                 <TextBox Width="40"
                          Text="{Binding VideoDelay, UpdateSourceTrigger=PropertyChanged}"/>
                 <Label Content="seconds"/>
@@ -64,14 +56,6 @@
                         Content="{Binding TogglePlayVideoCommandLabel}"
                         Command="{Binding TogglePlayVideoCommand}"
                         IsEnabled="{Binding IsPlaybackEnabled}"/>
-            </ToolBar>
-
-            <ToolBar>
-                <Label Content="Varjo:"/>
-                <Button Style="{StaticResource ToolbarIconButton}"
-                            Content="📂"
-                            Command="{Binding LoadVarjoDataCommand}"
-                            IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
             </ToolBar>
         </ToolBarTray>
 
@@ -104,51 +88,97 @@
         </StackPanel>
 
         <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="{Binding VisColumn1.Width}"/>
+                <ColumnDefinition Width="{Binding VisColumn2.Width}"/>
+                <ColumnDefinition Width="{Binding VisColumn3.Width}"/>
             </Grid.ColumnDefinitions>
-            
-            <MediaElement x:Name="VideoPlayer" Grid.Column="0"
-                        MinWidth="480"
-                        MinHeight="320"
-                        Stretch="Uniform"
-                        LoadedBehavior="Manual"
-                        UnloadedBehavior="Manual"/>
-            
-            <ScrollViewer Grid.Column="1"
-                        Content="{Binding GazePlot}"
-                        HorizontalScrollBarVisibility="Auto"
-                        VerticalScrollBarVisibility="Auto"
-                        VerticalAlignment="Top"/>
 
-            <ScrollViewer Grid.Column="2">
-                <hx:Viewport3DX EffectsManager="{Binding GazePlotEffectsManager}" 
-                                ShowCoordinateSystem="True"
-                                ShowViewCube="False"
-                                CoordinateSystemHorizontalPosition="0.8">
-                    <hx:Viewport3DX.Camera>
-                        <hx:PerspectiveCamera Position="2,0,0"
-                                              LookDirection="-2,0,0"
-                                              UpDirection="0,1,0"/>
-                    </hx:Viewport3DX.Camera>
-                    <hx:DirectionalLight3D Direction="-1,0,0" Color="White"/>
-                    <hx:AmbientLight3D Color="Red" />
+            <StackPanel Grid.ColumnSpan="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center">
+                <StackPanel.Resources>
+                    <Style TargetType="ToggleButton">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="border"
+                                            Background="LightGray"
+                                            CornerRadius="5"
+                                            Padding="5"
+                                            Margin="5">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="border"
+                                                    Property="Background"
+                                                    Value="LightBlue"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </StackPanel.Resources>
+                
+                <ToggleButton Content="📹"
+                              Command="{Binding ChangeVisColumnWidthCommand}"
+                              CommandParameter="0"
+                              IsChecked="{Binding VisColumn1.IsExpanded, Mode=TwoWay}"/>
+                <ToggleButton Content="2D"
+                              Command="{Binding ChangeVisColumnWidthCommand}"
+                              CommandParameter="1"
+                              IsChecked="{Binding VisColumn2.IsExpanded, Mode=TwoWay}"/>
+                <ToggleButton Content="3D"
+                              Command="{Binding ChangeVisColumnWidthCommand}"
+                              CommandParameter="2"
+                              IsChecked="{Binding VisColumn3.IsExpanded, Mode=TwoWay}"/>
+            </StackPanel>
+            <MediaElement x:Name="VideoPlayer" 
+                          Grid.Row="1" Grid.Column="0"
+                          MinWidth="480"
+                          MinHeight="320"
+                          Stretch="Uniform"
+                          LoadedBehavior="Manual"
+                          UnloadedBehavior="Manual"/>
+            
+            <ScrollViewer Grid.Row="1" Grid.Column="1"
+                          Content="{Binding GazePlot}"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          VerticalAlignment="Top"/>
+
+            <hx:Viewport3DX Grid.Row="1" Grid.Column="2"
+                            EffectsManager="{Binding GazePlotEffectsManager}" 
+                            ShowCoordinateSystem="True"
+                            ShowViewCube="False"
+                            CoordinateSystemHorizontalPosition="0.8">
+                <hx:Viewport3DX.Camera>
+                    <hx:PerspectiveCamera Position="2,0,0"
+                                            LookDirection="-2,0,0"
+                                            UpDirection="0,1,0"/>
+                </hx:Viewport3DX.Camera>
+                <hx:DirectionalLight3D Direction="-1,0,0" Color="White"/>
+                <hx:AmbientLight3D Color="Red" />
                     
-                    <hx:LineGeometryModel3D FixedSize="True"
-                                    Geometry="{Binding GazePlot3D}"
-                                    IsRendering="True"
-                                    Smoothness="2.0"
-                                    Thickness="0.5"
-                                    Color="White" />
-                    <hx:MeshGeometryModel3D 
-                        Geometry="{Binding GazePlot3DHead}"
-                        Material="{Binding GazePlot3DHeadMaterial}"
-                        Transform="{Binding GazePlot3DHeadTransform}">
-                    </hx:MeshGeometryModel3D>
-                </hx:Viewport3DX>
-            </ScrollViewer>
+                <hx:LineGeometryModel3D FixedSize="True"
+                                Geometry="{Binding GazePlot3D}"
+                                IsRendering="True"
+                                Smoothness="2.0"
+                                Thickness="0.5"
+                                Color="White" />
+                <hx:MeshGeometryModel3D 
+                    Geometry="{Binding GazePlot3DHead}"
+                    Material="{Binding GazePlot3DHeadMaterial}"
+                    Transform="{Binding GazePlot3DHeadTransform}">
+                </hx:MeshGeometryModel3D>
+            </hx:Viewport3DX>
         </Grid>
     </Grid>
 </Window>
