@@ -6,7 +6,7 @@ public static class ColorHelper
 {
     public static Color FromHsl(double h, double s, double l)
     {
-        h = h % 360;
+        h %= 360;
         s = Math.Clamp(s, 0, 1);
         l = Math.Clamp(l, 0, 1);
 
@@ -14,7 +14,7 @@ public static class ColorHelper
         double x = c * (1 - Math.Abs((h / 60.0 % 2) - 1));
         double m = l - c / 2;
 
-        double r = 0, g = 0, b = 0;
+        double r, g, b;
 
         if (h < 60)
             (r, g, b) = (c, x, 0);

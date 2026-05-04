@@ -12,7 +12,7 @@ internal static class VideoDelayStorage
 
     // Internal
 
-    static Dictionary<string, double> _items = [];
+    static readonly Dictionary<string, double> _items = [];
 
     static VideoDelayStorage()
     {

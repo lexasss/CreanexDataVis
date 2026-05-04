@@ -19,9 +19,9 @@ internal partial class MainViewModel : ObservableObject
     public partial class ExpandableColumnProps : ObservableObject
     {
         [ObservableProperty]
-        GridLength _width = new GridLength(1, GridUnitType.Star);
+        public partial GridLength Width { get; set; } = new(1, GridUnitType.Star);
         [ObservableProperty]
-        bool _isExpanded = false;
+        public partial bool IsExpanded { get; set; } = false;
     }
 
     [ObservableProperty]
@@ -58,6 +58,29 @@ internal partial class MainViewModel : ObservableObject
     //[NotifyPropertyChangedFor(nameof(LineThicknessMaximum))]
     public partial LineGeometry3D? GazePlot3D { get; private set; }
 
+    [ObservableProperty]
+    public partial EffectsManager GazePlotEffectsManager { get; set; } = new DefaultEffectsManager();
+
+    [ObservableProperty]
+    public partial HelixToolkit.SharpDX.MeshGeometry3D GazePlot3DHead { get; set; }
+
+    [ObservableProperty]
+    public partial Transform3D GazePlot3DHeadTransform { get; set; } = Services.GazePointTranslationService.DefaultGazePoint3DTransform;
+
+    [ObservableProperty]
+    public partial PhongMaterial GazePlot3DHeadMaterial { get; set; } = PhongMaterials.Red;
+
+    // Visualizations
+    [ObservableProperty]
+    public partial ExpandableColumnProps VisColumn1 { get; set; } = new();
+
+    [ObservableProperty]
+    public partial ExpandableColumnProps VisColumn2 { get; set; } = new();
+
+    [ObservableProperty]
+    public partial ExpandableColumnProps VisColumn3 { get; set; } = new();
+
+
     public MainViewModel(
         Services.IMediaPlayerService mediaPlayerService,
         Services.GazePlot3DRenderer gazePlot3DRenderer)
@@ -69,32 +92,10 @@ internal partial class MainViewModel : ObservableObject
 
         var b1 = new MeshBuilder();
         b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
-        _gazePlot3DHead = b1.ToMeshGeometry3D();
+        GazePlot3DHead = b1.ToMeshGeometry3D();
 
         _visColumnProps = [VisColumn1, VisColumn2, VisColumn3];
     }
-
-    // Observables
-
-    [ObservableProperty]
-    EffectsManager _gazePlotEffectsManager = new DefaultEffectsManager();
-
-    [ObservableProperty]
-    HelixToolkit.SharpDX.MeshGeometry3D _gazePlot3DHead;
-
-    [ObservableProperty]
-    Transform3D _gazePlot3DHeadTransform = Services.GazePointTranslationService.DefaultGazePoint3DTransform;
-
-    [ObservableProperty]
-    PhongMaterial _gazePlot3DHeadMaterial = PhongMaterials.Red;
-
-    // Visualizations
-    [ObservableProperty]
-    ExpandableColumnProps _visColumn1 = new();
-    [ObservableProperty]
-    ExpandableColumnProps _visColumn2 = new();
-    [ObservableProperty]
-    ExpandableColumnProps _visColumn3 = new();
 
     // Internal
 

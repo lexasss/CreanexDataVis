@@ -8,9 +8,7 @@ namespace CreanexDataVis.Helpers;
 /// </summary>
 public static class ScrollViewerProperties
 {
-    // ------------------------------
-    // HorizontalOffset
-    // ------------------------------
+    #region HorizontalOffset
     public static readonly DependencyProperty HorizontalOffsetProperty =
         DependencyProperty.RegisterAttached(
             "HorizontalOffset",
@@ -34,9 +32,9 @@ public static class ScrollViewerProperties
         }
     }
 
-    // ------------------------------
-    // BindableViewportWidth
-    // ------------------------------
+    #endregion
+
+    #region BindableViewportWidth
     public static readonly DependencyProperty BindableViewportWidthProperty =
         DependencyProperty.RegisterAttached(
             "BindableViewportWidth",
@@ -51,10 +49,9 @@ public static class ScrollViewerProperties
     public static void SetBindableViewportWidth(DependencyObject obj, double value)
         => obj.SetValue(BindableViewportWidthProperty, value);
 
-
-    // ------------------------------
-    // EnableExtraBindings
-    // ------------------------------
+    #endregion
+    
+    #region EnableExtraBindings
     public static readonly DependencyProperty EnableExtraBindingsProperty =
         DependencyProperty.RegisterAttached(
             "EnableExtraBindings",
@@ -86,4 +83,6 @@ public static class ScrollViewerProperties
         SetHorizontalOffset(sv, sv.HorizontalOffset);
         SetBindableViewportWidth(sv, sv.ViewportWidth);
     }
+
+    #endregion
 }

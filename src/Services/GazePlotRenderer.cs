@@ -128,7 +128,7 @@ internal class GazePlotRenderer
 
     private DrawingVisual DrawPath(VarjoRecord[] records, out Range<int> boundingBox)
     {
-        void DrawPoints(DrawingContext dc, IList<Point> points, double hue)
+        static void DrawPoints(DrawingContext dc, IList<Point> points, double hue)
         {
             if (points.Count > 1)
             {
@@ -200,7 +200,7 @@ internal class GazePlotRenderer
         (1.0 + r.GazeForwardX) * VectorToPixel,
         (1.0 - r.GazeForwardY) * VectorToPixel);
 
-    private BitmapSource CreateWarning()
+    private RenderTargetBitmap CreateWarning()
     {
         var dpi = VisualTreeHelper.GetDpi(Application.Current.MainWindow);
 

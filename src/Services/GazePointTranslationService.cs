@@ -8,7 +8,7 @@ namespace CreanexDataVis.Services;
 internal class GazePointTranslationService
 {
     public readonly static Transform DefaultGazePointTransform = new TranslateTransform(-100, 0);
-    public readonly static TranslateTransform3D DefaultGazePoint3DTransform = new TranslateTransform3D(-100, 0, 0);
+    public readonly static TranslateTransform3D DefaultGazePoint3DTransform = new(-100, 0, 0);
 
     public GazePointTranslationService(TimelineRecord[] timelineRecords, VarjoRecord[] varjoRecords, Point gazePlotOffset)
     {
@@ -81,7 +81,6 @@ internal class GazePointTranslationService
         if (varjoRecord == null)
             return DefaultGazePoint3DTransform;
 
-        var pt = GazePlotRenderer.GetGazeMarkLocation(varjoRecord);
         return new TranslateTransform3D(GazePlot3DRenderer.GetPoint3D(varjoRecord));
     }
 

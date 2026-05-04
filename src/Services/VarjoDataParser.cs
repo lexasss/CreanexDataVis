@@ -4,16 +4,10 @@ using System.IO;
 
 namespace CreanexDataVis.Services;
 
-internal class VarjoDataParser
+internal class VarjoDataParser(string filename)
 {
-    public string Filename { get; }
-    public VarjoRecord[]? Records { get; }
-
-    public VarjoDataParser(string filename)
-    {
-        Filename = filename;
-        Records = Parse(filename);
-    }
+    public string Filename { get; } = filename;
+    public VarjoRecord[]? Records { get; } = Parse(filename);
 
     private static VarjoRecord[]? Parse(string filename)
     {

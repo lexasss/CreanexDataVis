@@ -4,16 +4,10 @@ using System.IO;
 
 namespace CreanexDataVis.Services;
 
-internal class TimelineDataParser
+internal class TimelineDataParser(string filename)
 {
-    public string Filename { get; }
-    public TimelineRecord[]? Records { get; }
-
-    public TimelineDataParser(string filename)
-    {
-        Filename = filename;
-        Records = Parse(filename);
-    }
+    public string Filename { get; } = filename;
+    public TimelineRecord[]? Records { get; } = Parse(filename);
 
     private static TimelineRecord[]? Parse(string filePath)
     {

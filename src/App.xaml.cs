@@ -1,8 +1,8 @@
 ﻿using System.Windows;
 
-namespace CreanexDataVis
+namespace CreanexDataVis;
+
+public partial class App : Application
 {
-    public partial class App : Application
-    {
-    }
+    // nothing is needed here at the moment
 }
