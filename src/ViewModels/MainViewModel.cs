@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System.IO;
 using System.Numerics;
@@ -81,15 +82,8 @@ internal partial class MainViewModel : ObservableObject
     public partial ExpandableColumnProps VisColumn3 { get; set; } = new();
 
 
-    public MainViewModel(
-        Services.IMediaPlayerService mediaPlayerService,
-        Services.GazePlot3DRenderer gazePlot3DRenderer)
+    public MainViewModel()
     {
-        _gazePlot3DRenderer = gazePlot3DRenderer;
-        _mediaPlayerService = mediaPlayerService;
-        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
-        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
-
         var b1 = new MeshBuilder();
         b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
         GazePlot3DHead = b1.ToMeshGeometry3D();
@@ -97,20 +91,30 @@ internal partial class MainViewModel : ObservableObject
         _visColumnProps = [VisColumn1, VisColumn2, VisColumn3];
     }
 
+    public void InjectServices()
+    {
+        _gazePlot3DRenderer = App.ServiceProvider!.GetService<Services.IGazePlot3DRenderer>()!;
+        _mediaPlayerService = App.ServiceProvider!.GetService<Services.IMediaPlayerService>()!;
+        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
+        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
+    }
+
     // Internal
 
     const int ExpandedColumnStarWidth = 3;
+    const double TimelineMarkMaxRight = 0.8;
+    const double TimelineMarkMinLeft = 0.05;
 
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
 
-    readonly Services.IMediaPlayerService _mediaPlayerService;
-    readonly Services.GazePlot3DRenderer _gazePlot3DRenderer;
+    Services.IMediaPlayerService? _mediaPlayerService;
+    Services.IGazePlot3DRenderer? _gazePlot3DRenderer;
 
     readonly ExpandableColumnProps[] _visColumnProps;
 
-    Services.TimelineDataParser? _timelineParser;
-    Services.VarjoDataParser? _varjoParser;
+    IO.TimelineDataParser? _timelineParser;
+    IO.VarjoDataParser? _varjoParser;
     Services.GazePointTranslationService? _gazePointTranslationService;
 
     double _timelineOffset;
@@ -120,9 +124,9 @@ internal partial class MainViewModel : ObservableObject
 
     partial void OnVideoDelayChanged(double value)
     {
-        if (_mediaPlayerService.Filename != null)
+        if (_mediaPlayerService?.Filename != null)
         {
-            Services.VideoDelayStorage.SetDelay(_mediaPlayerService.Filename, VideoDelay);
+            IO.VideoDelayStorage.SetDelay(_mediaPlayerService.Filename, VideoDelay);
         }
     }
 
@@ -166,7 +170,7 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void TogglePlayVideo()
     {
-        if (_mediaPlayerService.IsPlaying)
+        if (_mediaPlayerService?.IsPlaying == true)
         {
             _mediaPlayerService.Pause();
             IsPlaying = false;
@@ -174,7 +178,7 @@ internal partial class MainViewModel : ObservableObject
         }
         else if (IsPlaybackEnabled)
         {
-            _mediaPlayerService.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
+            _mediaPlayerService?.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
             IsPlaying = true;
             TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
@@ -182,9 +186,9 @@ internal partial class MainViewModel : ObservableObject
 
 
     [RelayCommand]
-    private void ChangeVisColumnWidth(object column)
+    private void ChangeVisColumnWidth(string column)
     {
-        int index = int.Parse(column.ToString() ?? "");
+        int index = int.Parse(column);
 
         bool isVisColumnSelectedAlready = !_visColumnProps[index].IsExpanded; // reversed, as the flag is toggled already
 
@@ -212,7 +216,7 @@ internal partial class MainViewModel : ObservableObject
         if (!File.Exists(filename))
             return;
 
-        _timelineParser = new Services.TimelineDataParser(filename);
+        _timelineParser = new IO.TimelineDataParser(filename);
         if (_timelineParser.Records != null)
         {
             var renderer = new Services.TimelineRenderer();
@@ -255,7 +259,7 @@ internal partial class MainViewModel : ObservableObject
         if (!File.Exists(filename))
             return;
 
-        _varjoParser = new Services.VarjoDataParser(filename);
+        _varjoParser = new IO.VarjoDataParser(filename);
         if (_varjoParser.Records != null)
         {
             var renderer = new Services.GazePlotRenderer();
@@ -263,7 +267,7 @@ internal partial class MainViewModel : ObservableObject
 
             GazePlot = canvas;
 
-            GazePlot3D = _gazePlot3DRenderer.Create(_varjoParser.Records);
+            GazePlot3D = _gazePlot3DRenderer?.Create(_varjoParser.Records);
 
             if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
             {
@@ -290,10 +294,10 @@ internal partial class MainViewModel : ObservableObject
         if (!File.Exists(filename))
             return;
 
-        _mediaPlayerService.Load(new Uri(filename));
+        _mediaPlayerService?.Load(new Uri(filename));
         IsPlaybackEnabled = true;
 
-        if (Services.VideoDelayStorage.TryGetDelay(filename, out double videoDelay))
+        if (IO.VideoDelayStorage.TryGetDelay(filename, out double videoDelay))
         {
             VideoDelay = videoDelay;
         }
@@ -312,13 +316,13 @@ internal partial class MainViewModel : ObservableObject
         PlaybackTime = e + VideoDelay;
 
         var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
-        if (TimelineScrollX < x - 0.8 * TimelineWidth)
+        if (TimelineScrollX < x - TimelineMarkMaxRight * TimelineWidth)
         {
-            TimelineScrollX = x - 0.8 * TimelineWidth;
+            TimelineScrollX = x - TimelineMarkMaxRight * TimelineWidth;
         }
-        else if (TimelineScrollX > x - 0.05 * TimelineWidth)
+        else if (TimelineScrollX > x - TimelineMarkMinLeft * TimelineWidth)
         {
-            TimelineScrollX = x - 0.05 * TimelineWidth;
+            TimelineScrollX = x - TimelineMarkMinLeft * TimelineWidth;
         }
 
         if (_gazePointTranslationService != null)

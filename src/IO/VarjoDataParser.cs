@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.IO;
 
-namespace CreanexDataVis.Services;
+namespace CreanexDataVis.IO;
 
 internal class VarjoDataParser(string filename)
 {

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CreanexDataVis"
+        xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         xmlns:hlp="clr-namespace:CreanexDataVis.Helpers"
         xmlns:conv="clr-namespace:CreanexDataVis.Converters"
         xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
@@ -15,6 +16,10 @@
         MinHeight="620"
         MinWidth="496"
         PreviewKeyDown="Window_PreviewKeyDown">
+    
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
     
     <Window.InputBindings>
         <KeyBinding 

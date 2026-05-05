@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace CreanexDataVis.Services;
+namespace CreanexDataVis.IO;
 
 internal static class VideoDelayStorage
 {
@@ -16,7 +16,7 @@ internal static class VideoDelayStorage
 
     static VideoDelayStorage()
     {
-        App.Current.Exit += App_Exit;
+        System.Windows.Application.Current.Exit += App_Exit;
 
         try
         {

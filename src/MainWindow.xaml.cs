@@ -1,4 +1,5 @@
 ﻿using CreanexDataVis.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Input;
 
@@ -10,10 +11,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        var mediaService = new Services.MediaPlayerService(VideoPlayer);
-        var gazePlot3dRenderer = new Services.GazePlot3DRenderer();
+        ServiceCollection services = new();
+        services.AddSingleton<Services.IGazePlot3DRenderer, Services.GazePlot3DRenderer>();
+        services.AddSingleton<Services.IMediaPlayerService, Services.MediaPlayerService>(sp => new Services.MediaPlayerService(VideoPlayer));
 
-        DataContext = new MainViewModel(mediaService, gazePlot3dRenderer);
+        App.ServiceProvider = services.BuildServiceProvider();
+
+        (DataContext as MainViewModel)!.InjectServices();
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

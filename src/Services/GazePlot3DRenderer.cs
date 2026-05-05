@@ -6,7 +6,12 @@ using System.Windows.Media.Media3D;
 
 namespace CreanexDataVis.Services;
 
-internal class GazePlot3DRenderer
+internal interface IGazePlot3DRenderer
+{
+    LineGeometry3D Create(VarjoRecord[] records);
+}
+
+internal class GazePlot3DRenderer : IGazePlot3DRenderer
 {
     public LineGeometry3D Create(VarjoRecord[] records)
     {
