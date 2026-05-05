@@ -11,13 +11,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        ServiceCollection services = new();
-        services.AddSingleton<Services.IGazePlot3DRenderer, Services.GazePlot3DRenderer>();
-        services.AddSingleton<Services.IMediaPlayerService, Services.MediaPlayerService>(sp => new Services.MediaPlayerService(VideoPlayer));
-
-        App.ServiceProvider = services.BuildServiceProvider();
-
-        (DataContext as MainViewModel)!.InjectServices();
+        App.ServiceProvider
+            .GetService<Services.IMediaPlayerService>()!
+            .SetMediaElement(VideoPlayer);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

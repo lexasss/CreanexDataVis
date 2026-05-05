@@ -11,6 +11,7 @@ public interface IMediaPlayerService
     bool IsPlaying { get; }
     bool IsLoaded { get; }
     string? Filename { get; }
+    void SetMediaElement(MediaElement element);
     void Load(Uri source);
     void Play(double fromTime); // seconds
     void Pause();
@@ -26,11 +27,8 @@ public class MediaPlayerService : IMediaPlayerService
     public bool IsLoaded { get; private set; } = false;
     public string? Filename { get; private set; } = null;
 
-    public MediaPlayerService(MediaElement element)
+    public MediaPlayerService()
     {
-        _mediaElement = element;
-        _mediaElement.MediaEnded += OnMediaEnded;
-
         _timer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(TimeStep)
@@ -38,38 +36,50 @@ public class MediaPlayerService : IMediaPlayerService
 
         _timer.Tick += (_, _) =>
         {
-            var pos = _mediaElement.Position;
-            OnProgressChanged?.Invoke(this, pos.TotalSeconds);
+            if (_mediaElement != null)
+            {
+                var pos = _mediaElement.Position;
+                OnProgressChanged?.Invoke(this, pos.TotalSeconds);
+            }
         };
+    }
+
+    public void SetMediaElement(MediaElement element)
+    {
+        _mediaElement = element;
+        _mediaElement.MediaEnded += OnMediaEnded;
     }
 
     public void Load(Uri source)
     {
         Filename = source.LocalPath;
 
-        _mediaElement.Source = source;
-        _mediaElement.MediaOpened += OnMediaOpened;
-        _mediaElement.Play();
+        if (_mediaElement != null)
+        {
+            _mediaElement.Source = source;
+            _mediaElement.MediaOpened += OnMediaOpened;
+            _mediaElement.Play();
+        }
     }
 
     public void Play(double fromTime)
     {
-        _mediaElement.Position = TimeSpan.FromSeconds(fromTime);
-        _mediaElement.Play();
+        _mediaElement?.Position = TimeSpan.FromSeconds(fromTime);
+        _mediaElement?.Play();
         _timer.Start();
         IsPlaying = true;
     }
 
     public void Pause()
     {
-        _mediaElement.Pause();
+        _mediaElement?.Pause();
         _timer.Stop();
         IsPlaying = false;
     }
 
     public void Stop()
     {
-        _mediaElement.Stop();
+        _mediaElement?.Stop();
         _timer.Stop();
         IsPlaying = false;
     }
@@ -78,8 +88,9 @@ public class MediaPlayerService : IMediaPlayerService
 
     const double TimeStep = 0.05; // seconds
 
-    readonly MediaElement _mediaElement;
     readonly DispatcherTimer _timer;
+
+    MediaElement? _mediaElement;
 
     private void OnMediaEnded(object sender, RoutedEventArgs e)
     {
@@ -91,8 +102,8 @@ public class MediaPlayerService : IMediaPlayerService
 
     private void OnMediaOpened(object sender, RoutedEventArgs e)
     {
-        _mediaElement.Pause();
-        _mediaElement.MediaOpened -= OnMediaOpened;
+        _mediaElement?.Pause();
+        _mediaElement?.MediaOpened -= OnMediaOpened;
 
         IsLoaded = true;
     }

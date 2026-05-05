@@ -84,19 +84,16 @@ internal partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
+        _gazePlot3DRenderer = App.ServiceProvider.GetService<Services.IGazePlot3DRenderer>()!;
+        _mediaPlayerService = App.ServiceProvider.GetService<Services.IMediaPlayerService>()!;
+        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
+        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
+
         var b1 = new MeshBuilder();
         b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
         GazePlot3DHead = b1.ToMeshGeometry3D();
 
         _visColumnProps = [VisColumn1, VisColumn2, VisColumn3];
-    }
-
-    public void InjectServices()
-    {
-        _gazePlot3DRenderer = App.ServiceProvider!.GetService<Services.IGazePlot3DRenderer>()!;
-        _mediaPlayerService = App.ServiceProvider!.GetService<Services.IMediaPlayerService>()!;
-        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
-        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
     }
 
     // Internal
@@ -108,8 +105,8 @@ internal partial class MainViewModel : ObservableObject
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
 
-    Services.IMediaPlayerService? _mediaPlayerService;
-    Services.IGazePlot3DRenderer? _gazePlot3DRenderer;
+    readonly Services.IMediaPlayerService _mediaPlayerService;
+    readonly Services.IGazePlot3DRenderer _gazePlot3DRenderer;
 
     readonly ExpandableColumnProps[] _visColumnProps;
 
@@ -124,7 +121,7 @@ internal partial class MainViewModel : ObservableObject
 
     partial void OnVideoDelayChanged(double value)
     {
-        if (_mediaPlayerService?.Filename != null)
+        if (_mediaPlayerService.Filename != null)
         {
             IO.VideoDelayStorage.SetDelay(_mediaPlayerService.Filename, VideoDelay);
         }
@@ -170,7 +167,7 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void TogglePlayVideo()
     {
-        if (_mediaPlayerService?.IsPlaying == true)
+        if (_mediaPlayerService.IsPlaying == true)
         {
             _mediaPlayerService.Pause();
             IsPlaying = false;
@@ -178,7 +175,7 @@ internal partial class MainViewModel : ObservableObject
         }
         else if (IsPlaybackEnabled)
         {
-            _mediaPlayerService?.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
+            _mediaPlayerService.Play(PlaybackTime >= VideoDelay ? PlaybackTime - VideoDelay : 0);
             IsPlaying = true;
             TogglePlayVideoCommandLabel = VideoCommandPauseLabel;
         }
@@ -267,7 +264,7 @@ internal partial class MainViewModel : ObservableObject
 
             GazePlot = canvas;
 
-            GazePlot3D = _gazePlot3DRenderer?.Create(_varjoParser.Records);
+            GazePlot3D = _gazePlot3DRenderer.Create(_varjoParser.Records);
 
             if (canvas?.Children.Count > 1 && canvas.Children[1] is System.Windows.Shapes.Ellipse gazeMark)
             {
@@ -294,7 +291,7 @@ internal partial class MainViewModel : ObservableObject
         if (!File.Exists(filename))
             return;
 
-        _mediaPlayerService?.Load(new Uri(filename));
+        _mediaPlayerService.Load(new Uri(filename));
         IsPlaybackEnabled = true;
 
         if (IO.VideoDelayStorage.TryGetDelay(filename, out double videoDelay))
