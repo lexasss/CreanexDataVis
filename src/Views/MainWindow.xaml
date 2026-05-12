@@ -31,10 +31,34 @@
         <conv:NegateConveter x:Key="Not"/>
 
         <Style x:Key="ToolbarIconButton" TargetType="Button">
-            <Setter Property="MinHeight" Value="26"/>
+            <Setter Property="Height" Value="26"/>
             <Setter Property="MinWidth" Value="32"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="2,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#FFBBBBBB"/>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="BorderBrush" Value="#00BBBBBB"/>
+                    <Setter Property="Background" Value="#60BBBBBB"/>
+                    <Setter Property="Foreground" Value="#80000000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ButtonIcon" TargetType="Image">
+            <Setter Property="Opacity" Value="0.8"/>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.35"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
     
@@ -47,35 +71,43 @@
         
         <ToolBarTray Grid.Row="0">
             <ToolBar>
-                <Label Content="Data:"/>
                 <Button Style="{StaticResource ToolbarIconButton}"
                         Content="📂"
+                        ToolTip="Load data"
                         Command="{Binding LoadDataCommand}"
                         IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
+                <Button Style="{StaticResource ToolbarIconButton}"
+                        Command="{Binding ShowStatisticsCommand}"
+                        ToolTip="Show statistics"
+                        IsEnabled="{Binding IsTimelineReady}">
+                    <Image Style="{StaticResource ButtonIcon}"
+                           Height="16"
+                           Source="/Assets/Images/statititcs.png">
+                    </Image>
+                </Button>
+
+                <Button Style="{StaticResource ToolbarIconButton}"
+                        Content="{Binding TogglePlayVideoCommandLabel}"
+                        ToolTip="Play / pause"
+                        Command="{Binding TogglePlayVideoCommand}"
+                        IsEnabled="{Binding IsPlaybackEnabled}"/>
+            </ToolBar>
+            <ToolBar IsEnabled="{Binding IsPlaybackEnabled}">
                 <Label Content="Video delays"/>
                 <TextBox Width="40"
                          Text="{Binding VideoDelay, UpdateSourceTrigger=PropertyChanged}"/>
                 <Label Content="seconds"/>
-                <Separator/>
-                <Button Style="{StaticResource ToolbarIconButton}"
-                        Content="{Binding TogglePlayVideoCommandLabel}"
-                        Command="{Binding TogglePlayVideoCommand}"
-                        IsEnabled="{Binding IsPlaybackEnabled}"/>
-                <Button Style="{StaticResource ToolbarIconButton}"
-                        Content="Statistics"
-                        Command="{Binding ShowStatisticsCommand}"
-                        IsEnabled="{Binding IsTimelineReady}"/>
             </ToolBar>
         </ToolBarTray>
 
         <ScrollViewer Grid.Row="1"
-                        Content="{Binding Timeline}"
-                        HorizontalScrollBarVisibility="Auto"
-                        VerticalScrollBarVisibility="Auto"
-                        VerticalAlignment="Top"
-                        hlp:ScrollViewerProperties.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
-                        hlp:ScrollViewerProperties.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
-                        hlp:ScrollViewerProperties.EnableExtraBindings="True">
+                      Content="{Binding Timeline}"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      VerticalAlignment="Top"
+                      hlp:ScrollViewerProperties.HorizontalOffset="{Binding TimelineScrollX, Mode=TwoWay}"
+                      hlp:ScrollViewerProperties.BindableViewportWidth="{Binding TimelineWidth, Mode=OneWayToSource}"
+                      hlp:ScrollViewerProperties.EnableExtraBindings="True">
             <!--Image x:Name="imgTimeline"/-->
         </ScrollViewer>
         <StackPanel Grid.Row="1"
@@ -121,7 +153,7 @@
                                             Padding="5"
                                             Margin="5">
                                         <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                                                          VerticalAlignment="Center"/>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsChecked" Value="True">
@@ -167,11 +199,12 @@
                             EffectsManager="{Binding GazePlotEffectsManager}" 
                             ShowCoordinateSystem="True"
                             ShowViewCube="False"
-                            CoordinateSystemHorizontalPosition="0.8">
+                            CoordinateSystemHorizontalPosition="0.8"
+                            Background="White">
                 <hx:Viewport3DX.Camera>
                     <hx:PerspectiveCamera Position="2,0,0"
-                                            LookDirection="-2,0,0"
-                                            UpDirection="0,1,0"/>
+                                          LookDirection="-2,0,0"
+                                          UpDirection="0,1,0"/>
                 </hx:Viewport3DX.Camera>
                 <hx:DirectionalLight3D Direction="-1,0,0" Color="White"/>
                 <hx:AmbientLight3D Color="Red" />

@@ -1,4 +1,7 @@
-﻿namespace CreanexDataVis.Services;
+﻿using Microsoft.Win32;
+using System.IO;
+
+namespace CreanexDataVis.Services;
 
 internal interface IStatistics
 {

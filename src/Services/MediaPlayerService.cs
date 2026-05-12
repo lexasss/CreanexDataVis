@@ -6,8 +6,8 @@ namespace CreanexDataVis.Services;
 
 public interface IMediaPlayerService
 {
-    event EventHandler<double>? OnProgressChanged;
-    event EventHandler? OnStopped;
+    event EventHandler<double>? ProgressChanged;
+    event EventHandler? Stopped;
     bool IsPlaying { get; }
     bool IsLoaded { get; }
     string? Filename { get; }
@@ -20,8 +20,8 @@ public interface IMediaPlayerService
 
 public class MediaPlayerService : IMediaPlayerService
 {
-    public event EventHandler<double>? OnProgressChanged;
-    public event EventHandler? OnStopped;
+    public event EventHandler<double>? ProgressChanged;
+    public event EventHandler? Stopped;
 
     public bool IsPlaying { get; private set; } = false;
     public bool IsLoaded { get; private set; } = false;
@@ -39,7 +39,7 @@ public class MediaPlayerService : IMediaPlayerService
             if (_mediaElement != null)
             {
                 var pos = _mediaElement.Position;
-                OnProgressChanged?.Invoke(this, pos.TotalSeconds);
+                ProgressChanged?.Invoke(this, pos.TotalSeconds);
             }
         };
     }
@@ -97,7 +97,7 @@ public class MediaPlayerService : IMediaPlayerService
         _timer.Stop();
         IsPlaying = false;
 
-        OnStopped?.Invoke(this, EventArgs.Empty);
+        Stopped?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnMediaOpened(object sender, RoutedEventArgs e)

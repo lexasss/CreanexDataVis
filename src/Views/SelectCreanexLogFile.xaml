@@ -6,11 +6,11 @@
         xmlns:local="clr-namespace:CreanexDataVis.Views"
         xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         mc:Ignorable="d"
-        Title="Select Creanex log file"
-        Height="300"
-        Width="300"
-        Icon="/Assets/Images/icon.png"
-        ResizeMode="NoResize">
+        Title="Select a Creanex log file"
+        Height="220"
+        Width="280"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
 
     <Window.DataContext>
         <vm:SelectCreanexLogFile/>
@@ -27,30 +27,26 @@
                Content="Files"
                FontWeight="Bold"
                HorizontalAlignment="Center"
-               Margin="8"/>
+               Margin="4"/>
         
         <ListBox Grid.Row="1"
                  ItemsSource="{Binding Items}"
                  SelectedIndex="{Binding SelectedItemIndex}">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="{Binding Key}"
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Key}"
                                    Margin="0,0,10,0"/>
 
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding Value}" />
+                                   Text="{Binding Value}"
+                                   HorizontalAlignment="Right"/>
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>

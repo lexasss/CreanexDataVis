@@ -4,8 +4,6 @@ using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
-using System.IO;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,7 +57,6 @@ internal partial class MainViewModel : ObservableObject
     public partial string TogglePlayVideoCommandLabel { get; set; } = VideoCommandPlayLabel;
 
     [ObservableProperty]
-    //[NotifyPropertyChangedFor(nameof(LineThicknessMaximum))]
     public partial LineGeometry3D? GazePlot3D { get; private set; }
 
     [ObservableProperty]
@@ -87,11 +84,19 @@ internal partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
         _gazePlot3DRenderer = App.ServiceProvider.GetService<Services.IGazePlot3DRenderer>()!;
+
+        _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
+
+
+        _logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
+        _logFileService.CreanexLogFileSelected += LogFileService_CreanexLogFileSelected;
+        _logFileService.VarjoLogFileSelected += LogFileService_VarjoLogFileSelected;
+        _logFileService.VideoFileSelected += LogFileService_VideoFileSelected;
+
         _mediaPlayerService = App.ServiceProvider.GetService<Services.IMediaPlayerService>()!;
-        _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
-        _mediaPlayerService.OnStopped += MediaPlayerService_OnStopped;
+        _mediaPlayerService.ProgressChanged += MediaPlayerService_ProgressChanged;
+        _mediaPlayerService.Stopped += MediaPlayerService_Stopped;
 
         var b1 = new MeshBuilder();
         b1.AddSphere(new Vector3(0, 0, 0), 0.02f);
@@ -112,6 +117,7 @@ internal partial class MainViewModel : ObservableObject
     readonly Services.IStatistics _statisticsService;
     readonly Services.IMediaPlayerService _mediaPlayerService;
     readonly Services.IGazePlot3DRenderer _gazePlot3DRenderer;
+    readonly Services.ILogFileService _logFileService;
 
     readonly ExpandableColumnProps[] _visColumnProps;
 
@@ -139,25 +145,7 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void LoadData()
     {
-        var ofd = new OpenFolderDialog()
-        {
-            Title = "Select a folder with Creanex and Varjo log files, and a video recording",
-        };
-
-        if (ofd.ShowDialog() == true)
-        {
-            var folder = ofd.FolderName;
-
-            var creanexLogFiles = Directory.GetFiles(folder, "MixerEventLog*.csv");
-            if (creanexLogFiles.Length == 3)    // study log file
-            {
-                LoadStudyData(folder);
-            }
-            else                                // pilot log data
-            {
-                LoadPilotData(folder, creanexLogFiles);
-            }
-        }
+        _logFileService.ChooseParticipantFolder();
     }
 
     [RelayCommand]
@@ -203,7 +191,7 @@ internal partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowStatistics()
+    private static void ShowStatistics()
     {
         var window = new Views.Statistics();
         window.ShowDialog();
@@ -211,52 +199,15 @@ internal partial class MainViewModel : ObservableObject
 
     #endregion
 
-    private void LoadStudyData(string folder)
+    #region Event handlers for services
+
+    public void LogFileService_CreanexLogFileSelected(object? sender, string? filename)
     {
-        var logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
-        logFileService.Folder = folder;
-
-        var dialog = new Views.SelectCreanexLogFile();
-        if (dialog.ShowDialog() == true)
+        if (filename == null)
         {
-            var creanexLogFile = logFileService.SelectedCreanexFile;
-            if (creanexLogFile != null)
-            {
-                LoadCreanexData(creanexLogFile);
-            }
-
-            var varjoLogFile = logFileService.GetVarjoLogFile(creanexLogFile);
-            if (varjoLogFile != null)
-            {
-                LoadVarjoData(varjoLogFile);
-            }
-        }
-    }
-
-    private void LoadPilotData(string folder, string[] creanexLogFiles)
-    {
-        if (creanexLogFiles.Length > 0)
-        {
-            LoadCreanexData(creanexLogFiles[0]);
-        }
-
-        var varjoLogFiles = Directory.GetFiles(folder, "VarjoEyeTracking*.csv");
-        if (varjoLogFiles.Length > 0)
-        {
-            LoadVarjoData(varjoLogFiles[0]);
-        }
-
-        var videoFiles = Directory.GetFiles(folder, "*.mp4");
-        if (videoFiles.Length > 0)
-        {
-            LoadVideo(videoFiles[0]);
-        }
-    }
-
-    private void LoadCreanexData(string filename)
-    {
-        if (!File.Exists(filename))
+            Timeline = null;
             return;
+        }
 
         _timelineParser = new IO.TimelineDataParser(filename);
         if (_timelineParser.Records != null)
@@ -298,10 +249,14 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    private void LoadVarjoData(string filename)
+    private void LogFileService_VarjoLogFileSelected(object? sender, string? filename)
     {
-        if (!File.Exists(filename))
+        if (filename == null)
+        {
+            GazePlot = null;
+            GazePlot3D = null;
             return;
+        }
 
         _varjoParser = new IO.VarjoDataParser(filename);
         if (_varjoParser.Records != null)
@@ -333,10 +288,18 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    private void LoadVideo(string filename)
+    private void LogFileService_VideoFileSelected(object? sender, string? filename)
     {
-        if (!File.Exists(filename))
+        if (filename == null)
+        {
+            _mediaPlayerService.Stop();
+
+            IsPlaybackEnabled = false;
+            VideoDelay = 0;
+            TimelineScrollX = 0;
+
             return;
+        }
 
         _mediaPlayerService.Load(new Uri(filename));
         IsPlaybackEnabled = true;
@@ -347,15 +310,7 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        var canvas = sender as Canvas;
-        e.Handled = true;
-        var pos = e.GetPosition(canvas);
-        PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
-    }
-
-    private void MediaPlayerService_OnProgressChanged(object? sender, double e)
+    private void MediaPlayerService_ProgressChanged(object? sender, double e)
     {
         PlaybackTime = e + VideoDelay;
 
@@ -377,10 +332,20 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    private void MediaPlayerService_OnStopped(object? sender, EventArgs e)
+    private void MediaPlayerService_Stopped(object? sender, EventArgs e)
     {
         PlaybackTime = 0;
         IsPlaying = false;
         TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
+    }
+
+    #endregion
+
+    private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var canvas = sender as Canvas;
+        e.Handled = true;
+        var pos = e.GetPosition(canvas);
+        PlaybackTime = Services.TimelineRenderer.PixelsToSeconds(pos.X);
     }
 }

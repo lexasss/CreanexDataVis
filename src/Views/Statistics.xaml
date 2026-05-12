@@ -10,7 +10,8 @@
         Height="400"
         Width="200"
         Icon="/Assets/Images/icon.png"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
 
     <Window.DataContext>
         <vm:Statistics/>
@@ -20,7 +21,7 @@
         <Style x:Key="Title" TargetType="Label">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Margin" Value="4"/>
         </Style>
         <Style x:Key="StackItemsControl" TargetType="ItemsControl">
             <Setter Property="ItemsPanel">
@@ -50,7 +51,7 @@
                           ItemsSource="{Binding AttentionItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="4">
+                        <Grid Margin="8,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -76,7 +77,7 @@
                           ItemsSource="{Binding OperationItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="4">
+                        <Grid Margin="8,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />

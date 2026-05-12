@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
-using System.IO;
 
 namespace CreanexDataVis.ViewModels;
 
@@ -17,14 +15,13 @@ internal partial class SelectCreanexLogFile : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasItemSelected))]
     public partial int SelectedItemIndex { get; set; } = -1;
 
+    public string? SelectedFilename { get; set; }
+
     public bool HasItemSelected => SelectedItemIndex > -1;
 
-    public SelectCreanexLogFile()
+    public void SetItems(KeyValuePair<string, string>[] items)
     {
-        _logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
-        var filenames = _logFileService.GetCreanexFiles();
-
-        foreach (var kv in filenames)
+        foreach (var kv in items)
         {
             Items.Add(kv);
         }
@@ -32,12 +29,10 @@ internal partial class SelectCreanexLogFile : ObservableObject
 
     #region Internal
 
-    readonly Services.ILogFileService _logFileService;
-
     partial void OnSelectedItemIndexChanged(int value)
     {
-        _logFileService.SelectedCreanexFile = value >= 0
-            ? Path.Combine(_logFileService.Folder, Items[value].Value)
+        SelectedFilename = value >= 0
+            ? Items[value].Value
             : null;
     }
 

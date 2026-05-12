@@ -17,6 +17,8 @@ internal partial class Statistics : ObservableObject
     [ObservableProperty]
     public partial Visibility CopyToClipboardConfirmationVisibility { get; set; } = Visibility.Hidden;
 
+    public event EventHandler? HideCopyToClipboardConfirmation;
+
     public Statistics()
     {
         var statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
@@ -51,7 +53,7 @@ internal partial class Statistics : ObservableObject
         Task.Run(async () =>
         {
             await Task.Delay(2000);
-            Application.Current.MainWindow.Dispatcher.Invoke(() => CopyToClipboardConfirmationVisibility = Visibility.Hidden);
+            HideCopyToClipboardConfirmation?.Invoke(this, EventArgs.Empty);
         });
     }
 
