@@ -7,7 +7,7 @@
         xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         mc:Ignorable="d"
         Title="Statistics"
-        Height="300"
+        Height="400"
         Width="200"
         Icon="/Assets/Images/icon.png"
         ResizeMode="NoResize">
@@ -16,34 +16,115 @@
         <vm:Statistics/>
     </Window.DataContext>
 
-    <StackPanel>
-        <Label Content="Attention share"
-               FontWeight="Bold"
-               HorizontalAlignment="Center"
-               Margin="8"/>
-        <ItemsControl ItemsSource="{Binding Items}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+    <Window.Resources>
+        <Style x:Key="Title" TargetType="Label">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8"/>
+        </Style>
+        <Style x:Key="StackItemsControl" TargetType="ItemsControl">
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="0">
+            <Label Style="{StaticResource Title}" 
+                   Content="Attention share"/>
 
-                        <TextBlock Text="{Binding Key}"
-                                   Margin="0,0,10,0"/>
+            <ItemsControl Grid.Row="1"
+                          Style="{StaticResource StackItemsControl}"
+                          ItemsSource="{Binding AttentionItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding Value, StringFormat={}{0:F2}%}" />
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
+                            <TextBlock Text="{Binding Key}"
+                                       Margin="0,0,10,0"/>
+
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value, StringFormat={}{0:F2}%}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1">
+            <Label Style="{StaticResource Title}" 
+                   Content="Operations"/>
+
+            <ItemsControl Grid.Row="1"
+                          Style="{StaticResource StackItemsControl}"
+                          ItemsSource="{Binding OperationItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="{Binding Key}"
+                                       Margin="0,0,10,0"/>
+
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value, StringFormat={}{0:F1}}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        
+        <Grid Grid.Row="3">
+            <WrapPanel Margin="4"
+                       HorizontalAlignment="Center">
+                <WrapPanel.Resources>
+                    <Style x:Key="copy" TargetType="Button">
+                        <Setter Property="Width" Value="32"/>
+                        <Setter Property="Height" Value="32"/>
+                        <Setter Property="FontSize" Value="20"/>
+                        <Setter Property="Padding" Value="2,0,0,0"/>
+                        <Setter Property="Foreground" Value="Gray"/>
+                    </Style>
+
+                    <ControlTemplate x:Key="copySign" TargetType="ContentControl">
+                        <Grid>
+                            <TextBlock Margin="-2,-2,0,0" Foreground="White">▮</TextBlock>
+                            <TextBlock Margin="-2,-2,0,0">▯</TextBlock>
+                            <TextBlock Margin="2,2,0,0" Foreground="White">▮</TextBlock>
+                            <TextBlock Margin="2,2,0,0" >▯</TextBlock>
+                        </Grid>
+                    </ControlTemplate>
+                </WrapPanel.Resources>
+            
+                <Button Style="{StaticResource copy}"
+                        Command="{Binding CopyToClipboardCommand}">
+                    <ContentControl Template="{StaticResource copySign}"/>
+                </Button>
+            </WrapPanel>
+            <Label Content="Copied"
+                   Margin="4"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Right"
+                   Visibility="{Binding CopyToClipboardConfirmationVisibility}"/>
+        </Grid>
+    </Grid>
 </Window>

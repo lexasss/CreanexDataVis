@@ -13,6 +13,7 @@ public partial class App : Application
         services.AddSingleton<Services.IGazePlot3DRenderer, Services.GazePlot3DRenderer>();
         services.AddSingleton<Services.IMediaPlayerService, Services.MediaPlayerService>();
         services.AddSingleton<Services.IStatistics, Services.Statistics>();
+        services.AddSingleton<Services.ILogFileService, Services.LogFileService>();
 
         ServiceProvider = services.BuildServiceProvider();
     }

@@ -26,6 +26,7 @@ internal partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTimelineReady))]
     public partial FrameworkElement? Timeline { get; set; }
 
     [ObservableProperty]
@@ -39,6 +40,8 @@ internal partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     public partial Transform GazePointPosition { get; set; } = Services.GazePointTranslationService.DefaultGazePointTransform;
+
+    public bool IsTimelineReady => Timeline != null;
 
     [ObservableProperty]
     public partial bool IsPlaybackEnabled { get; set; } = false;
@@ -138,7 +141,7 @@ internal partial class MainViewModel : ObservableObject
     {
         var ofd = new OpenFolderDialog()
         {
-            Title = "Select a folder with Creanex and Varjo log files, and a video recording"
+            Title = "Select a folder with Creanex and Varjo log files, and a video recording",
         };
 
         if (ofd.ShowDialog() == true)
@@ -146,23 +149,14 @@ internal partial class MainViewModel : ObservableObject
             var folder = ofd.FolderName;
 
             var creanexLogFiles = Directory.GetFiles(folder, "MixerEventLog*.csv");
-            if (creanexLogFiles.Length > 0)
+            if (creanexLogFiles.Length == 3)    // study log file
             {
-                LoadCreanexData(creanexLogFiles[0]);
+                LoadStudyData(folder);
             }
-
-            var varjoLogFiles = Directory.GetFiles(folder, "VarjoEyeTracking*.csv");
-            if (varjoLogFiles.Length > 0)
+            else                                // pilot log data
             {
-                LoadVarjoData(varjoLogFiles[0]);
+                LoadPilotData(folder, creanexLogFiles);
             }
-
-            var videoFiles = Directory.GetFiles(folder, "*.mp4");
-            if (videoFiles.Length > 0)
-            {
-                LoadVideo(videoFiles[0]);
-            }
-            
         }
     }
 
@@ -216,6 +210,48 @@ internal partial class MainViewModel : ObservableObject
     }
 
     #endregion
+
+    private void LoadStudyData(string folder)
+    {
+        var logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
+        logFileService.Folder = folder;
+
+        var dialog = new Views.SelectCreanexLogFile();
+        if (dialog.ShowDialog() == true)
+        {
+            var creanexLogFile = logFileService.SelectedCreanexFile;
+            if (creanexLogFile != null)
+            {
+                LoadCreanexData(creanexLogFile);
+            }
+
+            var varjoLogFile = logFileService.GetVarjoLogFile(creanexLogFile);
+            if (varjoLogFile != null)
+            {
+                LoadVarjoData(varjoLogFile);
+            }
+        }
+    }
+
+    private void LoadPilotData(string folder, string[] creanexLogFiles)
+    {
+        if (creanexLogFiles.Length > 0)
+        {
+            LoadCreanexData(creanexLogFiles[0]);
+        }
+
+        var varjoLogFiles = Directory.GetFiles(folder, "VarjoEyeTracking*.csv");
+        if (varjoLogFiles.Length > 0)
+        {
+            LoadVarjoData(varjoLogFiles[0]);
+        }
+
+        var videoFiles = Directory.GetFiles(folder, "*.mp4");
+        if (videoFiles.Length > 0)
+        {
+            LoadVideo(videoFiles[0]);
+        }
+    }
 
     private void LoadCreanexData(string filename)
     {

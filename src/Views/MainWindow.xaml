@@ -64,7 +64,7 @@
                 <Button Style="{StaticResource ToolbarIconButton}"
                         Content="Statistics"
                         Command="{Binding ShowStatisticsCommand}"
-                        IsEnabled="{Binding IsPlaybackEnabled}"/>
+                        IsEnabled="{Binding IsTimelineReady}"/>
             </ToolBar>
         </ToolBarTray>
 
