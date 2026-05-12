@@ -84,6 +84,7 @@ internal partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
+        _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
         _gazePlot3DRenderer = App.ServiceProvider.GetService<Services.IGazePlot3DRenderer>()!;
         _mediaPlayerService = App.ServiceProvider.GetService<Services.IMediaPlayerService>()!;
         _mediaPlayerService.OnProgressChanged += MediaPlayerService_OnProgressChanged;
@@ -105,6 +106,7 @@ internal partial class MainViewModel : ObservableObject
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
 
+    readonly Services.IStatistics _statisticsService;
     readonly Services.IMediaPlayerService _mediaPlayerService;
     readonly Services.IGazePlot3DRenderer _gazePlot3DRenderer;
 
@@ -206,6 +208,13 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void ShowStatistics()
+    {
+        var window = new Views.Statistics();
+        window.ShowDialog();
+    }
+
     #endregion
 
     private void LoadCreanexData(string filename)
@@ -216,6 +225,8 @@ internal partial class MainViewModel : ObservableObject
         _timelineParser = new IO.TimelineDataParser(filename);
         if (_timelineParser.Records != null)
         {
+            _statisticsService.SetData(_timelineParser.Records);
+
             var renderer = new Services.TimelineRenderer();
             var canvas = renderer.Create(_timelineParser.Records, out _timelineOffset);
 
