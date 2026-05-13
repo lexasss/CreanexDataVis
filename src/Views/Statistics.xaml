@@ -7,8 +7,8 @@
         xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         mc:Ignorable="d"
         Title="Statistics"
-        Height="480"
-        Width="220"
+        Height="280"
+        Width="900"
         Icon="/Assets/Images/icon.png"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
@@ -27,98 +27,127 @@
             <Setter Property="ItemsPanel">
                 <Setter.Value>
                     <ItemsPanelTemplate>
-                        <StackPanel />
+                        <StackPanel/>
                     </ItemsPanelTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+        <Style x:Key="Column" TargetType="StackPanel">
+            <Setter Property="Width" Value="220"/>
         </Style>
     </Window.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0">
-            <Label Style="{StaticResource Title}" 
-                   Content="General"/>
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal">
+            <StackPanel Style="{StaticResource Column}">
+                <Label Style="{StaticResource Title}" 
+                       Content="General"/>
 
-            <ItemsControl Style="{StaticResource StackItemsControl}"
-                          ItemsSource="{Binding GeneralItems}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                <ItemsControl Style="{StaticResource StackItemsControl}"
+                              ItemsSource="{Binding GeneralItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="{Binding Name}"
-                                       Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding Name}"
+                                           Margin="0,0,10,0"/>
 
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Value}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Value}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel Style="{StaticResource Column}">
+                <Label Style="{StaticResource Title}" 
+                       Content="Attention share"/>
+
+                <ItemsControl Style="{StaticResource StackItemsControl}"
+                              ItemsSource="{Binding AttentionShares}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding Name}"
+                                           Margin="0,0,10,0"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Value, StringFormat={}{0:F2}%}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel Style="{StaticResource Column}">
+                <Label Style="{StaticResource Title}" 
+                       Content="Attention counts"/>
+
+                <ItemsControl Style="{StaticResource StackItemsControl}"
+                              ItemsSource="{Binding AttentionCounts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding Name}"
+                                           Margin="0,0,10,0"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Value}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel Style="{StaticResource Column}">
+                <Label Style="{StaticResource Title}" 
+                       Content="Operations"/>
+
+                <ItemsControl Style="{StaticResource StackItemsControl}"
+                              ItemsSource="{Binding Operations}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding Name}"
+                                           Margin="0,0,10,0"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Value}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </StackPanel>
         
-        <StackPanel Grid.Row="1">
-            <Label Style="{StaticResource Title}" 
-                   Content="Attention share"/>
-
-            <ItemsControl Style="{StaticResource StackItemsControl}"
-                          ItemsSource="{Binding AttentionItems}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Text="{Binding Name}"
-                                       Margin="0,0,10,0"/>
-
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Value, StringFormat={}{0:F2}%}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
-
-        <StackPanel Grid.Row="2">
-            <Label Style="{StaticResource Title}" 
-                   Content="Operations"/>
-
-            <ItemsControl Style="{StaticResource StackItemsControl}"
-                          ItemsSource="{Binding OperationItems}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Text="{Binding Name}"
-                                       Margin="0,0,10,0"/>
-
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Value, StringFormat={}{0:F1}}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
-        
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="5">
             <WrapPanel Margin="4"
                        HorizontalAlignment="Center">
                 <WrapPanel.Resources>

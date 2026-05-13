@@ -181,26 +181,28 @@
                               CommandParameter="2"
                               IsChecked="{Binding VisColumn3.IsExpanded, Mode=TwoWay}"/>
             </StackPanel>
-            <MediaElement x:Name="VideoPlayer" 
-                          Grid.Row="1" Grid.Column="0"
-                          MinWidth="480"
-                          MinHeight="320"
-                          Stretch="Uniform"
-                          LoadedBehavior="Manual"
-                          UnloadedBehavior="Manual"/>
+            <Grid Grid.Row="1" Grid.Column="0"
+                  Background="Black">
+                <MediaElement x:Name="VideoPlayer" 
+                              MinWidth="480"
+                              MinHeight="320"
+                              Stretch="Uniform"
+                              LoadedBehavior="Manual"
+                              UnloadedBehavior="Manual"/>
+            </Grid>
             
             <ScrollViewer Grid.Row="1" Grid.Column="1"
                           Content="{Binding GazePlot}"
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
-                          VerticalAlignment="Top"/>
+                          VerticalAlignment="Top"
+                          Background="Black"/>
 
             <hx:Viewport3DX Grid.Row="1" Grid.Column="2"
                             EffectsManager="{Binding GazePlotEffectsManager}" 
                             ShowCoordinateSystem="True"
                             ShowViewCube="False"
-                            CoordinateSystemHorizontalPosition="0.8"
-                            Background="White">
+                            CoordinateSystemHorizontalPosition="0.8">
                 <hx:Viewport3DX.Camera>
                     <hx:PerspectiveCamera Position="2,0,0"
                                           LookDirection="-2,0,0"

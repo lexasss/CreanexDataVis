@@ -4,6 +4,7 @@ internal interface IStatistics
 {
     void SetData(Models.TimelineRecord[] records);
     Models.NamedValue<double>[] GetAttentionShares();
+    Models.NamedValue<int>[] GetAttentionCounts();
     Models.NamedValue<double>[] GetOperations();
 }
 
@@ -36,6 +37,91 @@ internal class Statistics : IStatistics
             .ToArray();
     }
 
+    public Models.NamedValue<int>[] GetAttentionCounts()
+    {
+        if (_records == null)
+            return [];
+
+        AttentionData[] attentionData = Enumerable.Range(0, GazeAreas.Length)
+            .Select(_ => new AttentionData())
+            .ToArray();
+        IEnumerable<bool[]> gazeData = _records.Select(record => new bool[] {
+            record.GazeLeftWindow,
+            record.GazeFrontWindow,
+            record.GazeRightWindow,
+            record.GazeTDAScreen,
+            record.GazeHarvesterHead,
+            record.GazeTargetTreeId > 0
+        });
+
+        // This algorithm computed number of entrancies into each AOI. 
+        // However, an entrance is not counted if a fixation is too short.
+        // Also, too short break between 2 subsequent fixations is not counted
+        // as a break and therefore the algorithm counts only one fixation in this case.
+
+        int i = 0;
+        foreach (var gd in gazeData)
+        {
+            var timestamp = _records[i].Timestamp;
+
+            int j = 0;
+            foreach (bool isAoiFixated in gd)
+            {
+                AttentionData ad = attentionData[j];
+                if (!isAoiFixated)
+                {
+                    if (ad.IsStateOn)
+                    {
+                        if (!ad.HasStateChanged)
+                        {
+                            ad.HasStateChanged = true;
+                            ad.StateOffTimestamp = timestamp;
+                        }
+                        else
+                        {
+                            ad.HasStateChanged = false;
+                        }
+                        ad.IsStateOn = false;
+                    }
+
+                    if (ad.HasStateChanged && timestamp - ad.StateOffTimestamp > ContinuityThreshold)
+                    {
+                        ad.HasStateChanged = false;
+                    }
+                }
+                else
+                {
+                    if (!ad.IsStateOn)
+                    {
+                        if (!ad.HasStateChanged)
+                        {
+                            ad.HasStateChanged = true;
+                            ad.StateOnTimestamp = timestamp;
+                        }
+                        else
+                        {
+                            ad.HasStateChanged = false;
+                        }
+                        ad.IsStateOn = true;
+                    }
+
+                    if (ad.HasStateChanged && timestamp - ad.StateOnTimestamp > FixationThreshold)
+                    {
+                        ad.Count++;
+                        ad.HasStateChanged = false;
+                    }
+                }
+                j++;
+            }
+
+            i++;
+        }
+
+        return attentionData
+            .Select((r, i) => new Models.NamedValue<int>(GazeAreas[i], r.Count))
+            .ToArray();
+    }
+
     public Models.NamedValue<double>[] GetOperations()
     {
         if (_records == null)
@@ -57,11 +143,24 @@ internal class Statistics : IStatistics
 
         return results
             .Select((r, i) => i == 2
-                ? new Models.NamedValue<double>(Operations[i], r / 1000)    // driving duration
+                ? new Models.NamedValue<double>(Operations[i], (double)(r / 100) / 10)    // driving duration
                 : new Models.NamedValue<double>(Operations[i], r))
             .ToArray();
     }
+
     #region Internal
+
+    class AttentionData
+    {
+        public int Count = 0;
+        public long StateOnTimestamp = 0;
+        public long StateOffTimestamp = 0;
+        public bool IsStateOn = false;
+        public bool HasStateChanged = false;
+    }
+
+    const long ContinuityThreshold = 300;
+    const long FixationThreshold = 300;
 
     readonly static string[] GazeAreas = [
         "Left Window",

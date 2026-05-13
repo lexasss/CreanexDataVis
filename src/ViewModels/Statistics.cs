@@ -12,10 +12,13 @@ internal partial class Statistics : ObservableObject
     public partial ObservableCollection<Models.NamedValue<string>> GeneralItems { get; set; } = [];
 
     [ObservableProperty]
-    public partial ObservableCollection<Models.NamedValue<double>> AttentionItems { get; set; } = [];
+    public partial ObservableCollection<Models.NamedValue<double>> AttentionShares { get; set; } = [];
 
     [ObservableProperty]
-    public partial ObservableCollection<Models.NamedValue<double>> OperationItems { get; set; } = [];
+    public partial ObservableCollection<Models.NamedValue<int>> AttentionCounts { get; set; } = [];
+
+    [ObservableProperty]
+    public partial ObservableCollection<Models.NamedValue<double>> Operations { get; set; } = [];
 
     [ObservableProperty]
     public partial Visibility CopyToClipboardConfirmationVisibility { get; set; } = Visibility.Hidden;
@@ -31,13 +34,19 @@ internal partial class Statistics : ObservableObject
         var attentionShares = _statisticsService.GetAttentionShares();
         foreach (var item in attentionShares)
         {
-            AttentionItems.Add(item with { Value = item.Value * 100 });
+            AttentionShares.Add(item with { Value = item.Value * 100 });
+        }
+
+        var attentionCounts = _statisticsService.GetAttentionCounts();
+        foreach (var item in attentionCounts)
+        {
+            AttentionCounts.Add(item);
         }
 
         var operations = _statisticsService.GetOperations();
         foreach (var item in operations)
         {
-            OperationItems.Add(item);
+            Operations.Add(item);
         }
     }
 
@@ -56,11 +65,13 @@ internal partial class Statistics : ObservableObject
         List<string> lines = [];
 
         foreach (var item in GeneralItems)
+            lines.Add($"{item.Name}\t{item.Value}");
+        foreach (var item in AttentionShares)
             lines.Add($"{item.Name}\t{item.Value:F2}");
-        foreach (var item in AttentionItems)
-            lines.Add($"{item.Name}\t{item.Value:F2}");
-        foreach (var item in OperationItems)
-            lines.Add($"{item.Name}\t{item.Value:F1}");
+        foreach (var item in AttentionCounts)
+            lines.Add($"{item.Name}\t{item.Value}");
+        foreach (var item in Operations)
+            lines.Add($"{item.Name}\t{item.Value}");
 
         Clipboard.SetText(string.Join('\n', lines));
 
