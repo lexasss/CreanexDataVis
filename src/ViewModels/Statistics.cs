@@ -9,10 +9,13 @@ namespace CreanexDataVis.ViewModels;
 internal partial class Statistics : ObservableObject
 {
     [ObservableProperty]
-    public partial ObservableCollection<KeyValuePair<string, double>> AttentionItems { get; set; } = [];
+    public partial ObservableCollection<Models.NamedValue<string>> GeneralItems { get; set; } = [];
 
     [ObservableProperty]
-    public partial ObservableCollection<KeyValuePair<string, double>> OperationItems { get; set; } = [];
+    public partial ObservableCollection<Models.NamedValue<double>> AttentionItems { get; set; } = [];
+
+    [ObservableProperty]
+    public partial ObservableCollection<Models.NamedValue<double>> OperationItems { get; set; } = [];
 
     [ObservableProperty]
     public partial Visibility CopyToClipboardConfirmationVisibility { get; set; } = Visibility.Hidden;
@@ -21,20 +24,29 @@ internal partial class Statistics : ObservableObject
 
     public Statistics()
     {
-        var statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
-        
-        var attentionShares = statisticsService.GetAttentionShares();
-        foreach (var kv in attentionShares)
+        GeneralItems.Add(new Models.NamedValue<string>("Participant", _logFileService.Participant ?? "-"));
+        GeneralItems.Add(new Models.NamedValue<string>("File", _logFileService.Filename ?? "-"));
+        GeneralItems.Add(new Models.NamedValue<string>("Condition", _logFileService.Condition ?? "-"));
+
+        var attentionShares = _statisticsService.GetAttentionShares();
+        foreach (var item in attentionShares)
         {
-            AttentionItems.Add(new KeyValuePair<string, double>(kv.Key, kv.Value * 100));
+            AttentionItems.Add(item with { Value = item.Value * 100 });
         }
 
-        var operations = statisticsService.GetOperations();
-        foreach (var kv in operations)
+        var operations = _statisticsService.GetOperations();
+        foreach (var item in operations)
         {
-            OperationItems.Add(kv);
+            OperationItems.Add(item);
         }
     }
+
+    #region Internal
+
+    readonly Services.IStatistics _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
+    readonly Services.ILogFileService _logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
+
+    #endregion
 
     #region Commands
 
@@ -42,10 +54,13 @@ internal partial class Statistics : ObservableObject
     private void CopyToClipboard()
     {
         List<string> lines = [];
-        foreach (var kv in AttentionItems)
-            lines.Add($"{kv.Key}\t{kv.Value:F2}");
-        foreach (var kv in OperationItems)
-            lines.Add($"{kv.Key}\t{kv.Value:F1}");
+
+        foreach (var item in GeneralItems)
+            lines.Add($"{item.Name}\t{item.Value:F2}");
+        foreach (var item in AttentionItems)
+            lines.Add($"{item.Name}\t{item.Value:F2}");
+        foreach (var item in OperationItems)
+            lines.Add($"{item.Name}\t{item.Value:F1}");
 
         Clipboard.SetText(string.Join('\n', lines));
 

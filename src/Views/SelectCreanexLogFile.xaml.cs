@@ -4,18 +4,18 @@ namespace CreanexDataVis.Views;
 
 public partial class SelectCreanexLogFile : Window
 {
-    public string SelectedFilename => (DataContext as ViewModels.SelectCreanexLogFile)?.SelectedFilename ?? string.Empty;
+    public Models.LogFileProps? SelectedLogFileProps => (DataContext as ViewModels.SelectCreanexLogFile)!.SelectedLogFile;
 
-    public SelectCreanexLogFile(KeyValuePair<string, string>[] items)
+    public SelectCreanexLogFile(Models.LogFileProps[] items)
     {
         Owner = Application.Current.MainWindow;
 
         InitializeComponent();
         
-        if (DataContext is ViewModels.SelectCreanexLogFile sclf)
+        if (DataContext is ViewModels.SelectCreanexLogFile vm)
         {
-            sclf.SetItems(items);
-            sclf.CloseRequest += (s, e) =>
+            vm.SetItems(items);
+            vm.CloseRequest += (s, e) =>
             {
                 DialogResult = e;
             };

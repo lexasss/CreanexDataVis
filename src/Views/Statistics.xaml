@@ -7,8 +7,8 @@
         xmlns:vm="clr-namespace:CreanexDataVis.ViewModels"
         mc:Ignorable="d"
         Title="Statistics"
-        Height="400"
-        Width="200"
+        Height="480"
+        Width="220"
         Icon="/Assets/Images/icon.png"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
@@ -38,16 +38,41 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
             <Label Style="{StaticResource Title}" 
+                   Content="General"/>
+
+            <ItemsControl Style="{StaticResource StackItemsControl}"
+                          ItemsSource="{Binding GeneralItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="8,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="{Binding Name}"
+                                       Margin="0,0,10,0"/>
+
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="1">
+            <Label Style="{StaticResource Title}" 
                    Content="Attention share"/>
 
-            <ItemsControl Grid.Row="1"
-                          Style="{StaticResource StackItemsControl}"
+            <ItemsControl Style="{StaticResource StackItemsControl}"
                           ItemsSource="{Binding AttentionItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -57,7 +82,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="{Binding Key}"
+                            <TextBlock Text="{Binding Name}"
                                        Margin="0,0,10,0"/>
 
                             <TextBlock Grid.Column="1"
@@ -68,12 +93,11 @@
             </ItemsControl>
         </StackPanel>
 
-        <StackPanel Grid.Row="1">
+        <StackPanel Grid.Row="2">
             <Label Style="{StaticResource Title}" 
                    Content="Operations"/>
 
-            <ItemsControl Grid.Row="1"
-                          Style="{StaticResource StackItemsControl}"
+            <ItemsControl Style="{StaticResource StackItemsControl}"
                           ItemsSource="{Binding OperationItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -83,7 +107,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="{Binding Key}"
+                            <TextBlock Text="{Binding Name}"
                                        Margin="0,0,10,0"/>
 
                             <TextBlock Grid.Column="1"
@@ -94,7 +118,7 @@
             </ItemsControl>
         </StackPanel>
         
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
             <WrapPanel Margin="4"
                        HorizontalAlignment="Center">
                 <WrapPanel.Resources>

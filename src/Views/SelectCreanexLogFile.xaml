@@ -41,11 +41,11 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Column="0"
-                                   Text="{Binding Key}"
+                                   Text="{Binding Condition}"
                                    Margin="0,0,10,0"/>
 
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding Value}"
+                                   Text="{Binding Filename}"
                                    HorizontalAlignment="Right"/>
                     </Grid>
                 </DataTemplate>

@@ -7,12 +7,16 @@ internal interface ILogFileService
 {
     string? Folder { get; }
 
+    string? Participant { get; }
+    string? Filename { get; }
+    string? Condition { get; }
+
     string? CreanexLogFile { get; }
     string? VarjoLogFile { get; }
     string? VideoFile { get; }
 
-    event EventHandler<string?> CreanexLogFileSelected;
-    event EventHandler<string?> VarjoLogFileSelected;
+    event EventHandler<Models.LogFileProps?> CreanexLogFileSelected;
+    event EventHandler<Models.LogFileProps?> VarjoLogFileSelected;
     event EventHandler<string?> VideoFileSelected;
 
     /// <summary>
@@ -25,12 +29,16 @@ internal class LogFileService : ILogFileService
 {
     public string? Folder { get; private set; }
 
+    public string? Participant { get; private set; }
+    public string? Filename { get; private set; }
+    public string? Condition { get; private set; }
+
     public string? CreanexLogFile { get; set; }
     public string? VarjoLogFile { get; private set; }
     public string? VideoFile { get; private set; }
 
-    public event EventHandler<string?>? CreanexLogFileSelected;
-    public event EventHandler<string?>? VarjoLogFileSelected;
+    public event EventHandler<Models.LogFileProps?>? CreanexLogFileSelected;
+    public event EventHandler<Models.LogFileProps?>? VarjoLogFileSelected;
     public event EventHandler<string?>? VideoFileSelected;
 
     public void ChooseParticipantFolder()
@@ -71,16 +79,24 @@ internal class LogFileService : ILogFileService
     private void LoadStudyData(string folder)
     {
         var filenames = Directory.GetFiles(folder, CreanexLogFilePattern);
-        var dialog = new Views.SelectCreanexLogFile(GetConditionsAndCreanexFiles(folder, filenames));
+        var dialog = new Views.SelectCreanexLogFile(GetCreanexLogFileProps(folder, filenames));
         if (dialog.ShowDialog() == true)
         {
             Folder = folder;
 
-            CreanexLogFile = Path.Combine(folder, dialog.SelectedFilename);
-            CreanexLogFileSelected?.Invoke(this, CreanexLogFile);
+            Participant = folder.Split(Path.DirectorySeparatorChar)[^1];
+            Filename = dialog.SelectedLogFileProps?.Filename;
+            Condition = dialog.SelectedLogFileProps?.Condition;
+
+            CreanexLogFile = dialog.SelectedLogFileProps != null 
+                ? Path.Combine(folder, dialog.SelectedLogFileProps.Filename)
+                : null;
+            CreanexLogFileSelected?.Invoke(this, dialog.SelectedLogFileProps == null || CreanexLogFile == null ? null :
+                new Models.LogFileProps(dialog.SelectedLogFileProps.Condition, CreanexLogFile));
 
             VarjoLogFile = GetVarjoLogFile(folder, CreanexLogFile);
-            VarjoLogFileSelected?.Invoke(this, VarjoLogFile);
+            VarjoLogFileSelected?.Invoke(this, dialog.SelectedLogFileProps == null || VarjoLogFile == null ? null :
+                new Models.LogFileProps(dialog.SelectedLogFileProps.Condition, VarjoLogFile));
 
             VideoFileSelected?.Invoke(this, null);
         }
@@ -90,18 +106,18 @@ internal class LogFileService : ILogFileService
     {
         var creanexLogFiles = Directory.GetFiles(folder, CreanexLogFilePattern);
         CreanexLogFile = creanexLogFiles.Length > 0 ? creanexLogFiles[0] : null;
-        CreanexLogFileSelected?.Invoke(this, CreanexLogFile);
+        CreanexLogFileSelected?.Invoke(this, CreanexLogFile == null ? null : new Models.LogFileProps("", CreanexLogFile));
 
         var varjoLogFiles = Directory.GetFiles(folder, VarjoLogFilePattern);
         VarjoLogFile = varjoLogFiles.Length > 0 ? varjoLogFiles[0] : null;
-        VarjoLogFileSelected?.Invoke(this, VarjoLogFile);
+        VarjoLogFileSelected?.Invoke(this, VarjoLogFile == null ? null : new Models.LogFileProps("", VarjoLogFile));
 
         var videoFiles = Directory.GetFiles(folder, VideoFilePattern);
         VideoFile = videoFiles.Length > 0 ? videoFiles[0] : null;
         VideoFileSelected?.Invoke(this, VideoFile);
     }
 
-    private static KeyValuePair<string, string>[] GetConditionsAndCreanexFiles(string folder, string[] filenames)
+    private static Models.LogFileProps[] GetCreanexLogFileProps(string folder, string[] filenames)
     {
         if (string.IsNullOrEmpty(folder) || filenames.Length < 3)
             return [];
@@ -111,12 +127,12 @@ internal class LogFileService : ILogFileService
         {
             var conditions = Conditions[(id - 1) % 3];
             return conditions
-                .Select((c, i) => new KeyValuePair<string, string>(c.ToString(), Path.GetFileName(filenames[i])))
+                .Select((c, i) => new Models.LogFileProps(c.ToString(), Path.GetFileName(filenames[i])))
                 .ToArray();
         }
 
         return filenames
-            .Select(fn => new KeyValuePair<string, string>("", Path.GetFileName(fn)))
+            .Select(fn => new Models.LogFileProps("", Path.GetFileName(fn)))
             .ToArray();
     }
 

@@ -9,21 +9,21 @@ internal partial class SelectCreanexLogFile : ObservableObject
     public event EventHandler<bool>? CloseRequest;
 
     [ObservableProperty]
-    public partial ObservableCollection<KeyValuePair<string, string>> Items { get; set; } = [];
+    public partial ObservableCollection<Models.LogFileProps> Items { get; set; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasItemSelected))]
     public partial int SelectedItemIndex { get; set; } = -1;
 
-    public string? SelectedFilename { get; set; }
+    public Models.LogFileProps? SelectedLogFile { get; set; }
 
     public bool HasItemSelected => SelectedItemIndex > -1;
 
-    public void SetItems(KeyValuePair<string, string>[] items)
+    public void SetItems(Models.LogFileProps[] items)
     {
-        foreach (var kv in items)
+        foreach (var item in items)
         {
-            Items.Add(kv);
+            Items.Add(item);
         }
     }
 
@@ -31,8 +31,8 @@ internal partial class SelectCreanexLogFile : ObservableObject
 
     partial void OnSelectedItemIndexChanged(int value)
     {
-        SelectedFilename = value >= 0
-            ? Items[value].Value
+        SelectedLogFile = value >= 0
+            ? Items[value]
             : null;
     }
 

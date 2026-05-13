@@ -1,13 +1,10 @@
-﻿using Microsoft.Win32;
-using System.IO;
-
-namespace CreanexDataVis.Services;
+﻿namespace CreanexDataVis.Services;
 
 internal interface IStatistics
 {
     void SetData(Models.TimelineRecord[] records);
-    KeyValuePair<string, double>[] GetAttentionShares();
-    KeyValuePair<string, double>[] GetOperations();
+    Models.NamedValue<double>[] GetAttentionShares();
+    Models.NamedValue<double>[] GetOperations();
 }
 
 internal class Statistics : IStatistics
@@ -17,7 +14,7 @@ internal class Statistics : IStatistics
         _records = records;
     }
 
-    public KeyValuePair<string, double>[] GetAttentionShares()
+    public Models.NamedValue<double>[] GetAttentionShares()
     {
         if (_records == null)
             return [];
@@ -35,11 +32,11 @@ internal class Statistics : IStatistics
         }
 
         return results
-            .Select((r, i) => new KeyValuePair<string, double>(GazeAreas[i], r / _records.Length))
+            .Select((r, i) => new Models.NamedValue<double>(GazeAreas[i], r / _records.Length))
             .ToArray();
     }
 
-    public KeyValuePair<string, double>[] GetOperations()
+    public Models.NamedValue<double>[] GetOperations()
     {
         if (_records == null)
             return [];
@@ -60,8 +57,8 @@ internal class Statistics : IStatistics
 
         return results
             .Select((r, i) => i == 2
-                ? new KeyValuePair<string, double>(Operations[i], r / 1000)
-                : new KeyValuePair<string, double>(Operations[i], r))
+                ? new Models.NamedValue<double>(Operations[i], r / 1000)    // driving duration
+                : new Models.NamedValue<double>(Operations[i], r))
             .ToArray();
     }
     #region Internal
