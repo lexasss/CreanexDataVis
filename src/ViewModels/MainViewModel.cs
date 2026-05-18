@@ -222,15 +222,15 @@ internal partial class MainViewModel : ObservableObject
 
     #region Event handlers for services
 
-    public void LogFileService_CreanexLogFileSelected(object? sender, Models.LogFileProps? logFileProps)
+    public void LogFileService_CreanexLogFileSelected(object? sender, string? filename)
     {
-        if (logFileProps == null)
+        if (filename == null)
         {
             Timeline = null;
             return;
         }
 
-        _timelineParser = new IO.TimelineDataParser(logFileProps.Filename);
+        _timelineParser = new IO.TimelineDataParser(filename);
         if (_timelineParser.Records != null)
         {
             _statisticsService.SetData(_timelineParser.Records);
@@ -270,16 +270,16 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
-    private void LogFileService_VarjoLogFileSelected(object? sender, Models.LogFileProps? logFileProps)
+    private void LogFileService_VarjoLogFileSelected(object? sender, string? filename)
     {
-        if (logFileProps == null)
+        if (filename == null)
         {
             GazePlot = null;
             GazePlot3D = null;
             return;
         }
 
-        _varjoParser = new IO.VarjoDataParser(logFileProps.Filename);
+        _varjoParser = new IO.VarjoDataParser(filename);
         if (_varjoParser.Records != null)
         {
             var renderer = new Services.GazePlotRenderer();
