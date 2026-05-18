@@ -2,6 +2,9 @@
 
 namespace CreanexDataVis.Views;
 
+/// <summary>
+/// Obsolete, unused
+/// </summary>
 public partial class SelectCreanexLogFile : Window
 {
     public Models.LogFileProps? SelectedLogFileProps => (DataContext as ViewModels.SelectCreanexLogFile)!.SelectedLogFile;

@@ -76,6 +76,10 @@
                         ToolTip="Load data"
                         Command="{Binding LoadDataCommand}"
                         IsEnabled="{Binding IsPlaying, Converter={StaticResource Not}}"/>
+                <ComboBox ItemsSource="{Binding StudyLogFiles, Mode=OneWay}"
+                          SelectedIndex="{Binding StudyDataIndex, Mode=TwoWay}"
+                          IsEnabled="{Binding HasMultipleLogFiles}"
+                          MinWidth="120"/>
                 <Button Style="{StaticResource ToolbarIconButton}"
                         Command="{Binding ShowStatisticsCommand}"
                         ToolTip="Show statistics"

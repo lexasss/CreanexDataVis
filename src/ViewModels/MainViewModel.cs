@@ -71,6 +71,15 @@ internal partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial PhongMaterial GazePlot3DHeadMaterial { get; set; } = PhongMaterials.Red;
 
+    [ObservableProperty]
+    public partial int StudyDataIndex { get; set; } = -1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMultipleLogFiles))]
+    public partial string[] StudyLogFiles { get; set; } = [];
+
+    public bool HasMultipleLogFiles => StudyLogFiles.Length > 1;
+
     // Visualizations
     [ObservableProperty]
     public partial ExpandableColumnProps VisColumn1 { get; set; } = new();
@@ -138,6 +147,11 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
+    partial void OnStudyDataIndexChanged(int value)
+    {
+        _logFileService.SetCreanexLogFile(value < 0 || value >= StudyLogFiles.Length ? null : StudyLogFiles[value]);
+    }
+
     #endregion
 
     #region Commands
@@ -145,7 +159,14 @@ internal partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void LoadData()
     {
-        _logFileService.ChooseParticipantFolder();
+        if (_logFileService.ChooseParticipantFolder())
+        {
+            StudyLogFiles = _logFileService.FolderCreanexFiles;
+            if (StudyLogFiles.Length > 0)
+            {
+                StudyDataIndex = 0;
+            }
+        }
     }
 
     [RelayCommand]
@@ -293,6 +314,7 @@ internal partial class MainViewModel : ObservableObject
         if (filename == null)
         {
             _mediaPlayerService.Stop();
+            _mediaPlayerService.Load(null);
 
             IsPlaybackEnabled = false;
             VideoDelay = 0;

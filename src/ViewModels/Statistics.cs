@@ -28,7 +28,7 @@ internal partial class Statistics : ObservableObject
     public Statistics()
     {
         GeneralItems.Add(new Models.NamedValue<string>("Participant", _logFileService.Participant ?? "-"));
-        GeneralItems.Add(new Models.NamedValue<string>("File", _logFileService.Filename ?? "-"));
+        GeneralItems.Add(new Models.NamedValue<string>("File", _logFileService.CreanexLogFile ?? "-"));
         GeneralItems.Add(new Models.NamedValue<string>("Condition", _logFileService.Condition ?? "-"));
 
         var attentionShares = _statisticsService.GetAttentionShares();

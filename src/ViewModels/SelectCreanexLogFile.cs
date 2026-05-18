@@ -4,6 +4,9 @@ using System.Collections.ObjectModel;
 
 namespace CreanexDataVis.ViewModels;
 
+/// <summary>
+/// Obsolete, unused
+/// </summary>
 internal partial class SelectCreanexLogFile : ObservableObject
 {
     public event EventHandler<bool>? CloseRequest;

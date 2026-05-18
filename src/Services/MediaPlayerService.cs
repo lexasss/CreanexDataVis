@@ -12,7 +12,7 @@ public interface IMediaPlayerService
     bool IsLoaded { get; }
     string? Filename { get; }
     void SetMediaElement(MediaElement element);
-    void Load(Uri source);
+    void Load(Uri? source);
     void Play(double fromTime); // seconds
     void Pause();
     void Stop();
@@ -50,15 +50,18 @@ public class MediaPlayerService : IMediaPlayerService
         _mediaElement.MediaEnded += OnMediaEnded;
     }
 
-    public void Load(Uri source)
+    public void Load(Uri? source)
     {
-        Filename = source.LocalPath;
+        Filename = source?.LocalPath;
 
         if (_mediaElement != null)
         {
             _mediaElement.Source = source;
-            _mediaElement.MediaOpened += OnMediaOpened;
-            _mediaElement.Play();
+            if (source != null)
+            {
+                _mediaElement.MediaOpened += OnMediaOpened;
+                _mediaElement.Play();
+            }
         }
     }
 
