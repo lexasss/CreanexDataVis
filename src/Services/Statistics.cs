@@ -20,10 +20,48 @@ internal class Statistics : IStatistics
         if (_records == null)
             return [];
 
+        int startIndex = 0;
+        int stopIndex = _records.Length - 1;
+
+        // Skip records from the beginning of the timeline until the first record with gaze on any AOI.
+        while (startIndex < stopIndex)
+        {
+            var record  = _records[startIndex];
+            if (record.GazeLeftWindow ||
+                record.GazeFrontWindow ||
+                record.GazeRightWindow ||
+                record.GazeTDAScreen ||
+                record.GazeHarvesterHead ||
+                record.GazeTargetTreeId > 0)
+            {
+                break;
+            }
+            startIndex++;
+        }
+
+        // Skip records from the end of the timeline until the first record with gaze on any AOI.
+        while (stopIndex > startIndex)
+        {
+            var record  = _records[stopIndex];
+            if (record.GazeLeftWindow ||
+                record.GazeFrontWindow ||
+                record.GazeRightWindow ||
+                record.GazeTDAScreen ||
+                record.GazeHarvesterHead ||
+                record.GazeTargetTreeId > 0)
+            {
+                break;
+            }
+            stopIndex--;
+        }
+
+        // Compute shares of attention for each AOI as a ratio of number of records with gaze on the AOI to the total number of records in the timeline (after trimming).
+
         double[] results = [0, 0, 0, 0, 0, 0];
 
-        foreach (var record in _records)
+        for (int i = startIndex; i <= stopIndex; i++)
         {
+            var record = _records[i];
             results[0] += record.GazeLeftWindow ? 1 : 0;
             results[1] += record.GazeFrontWindow ? 1 : 0;
             results[2] += record.GazeRightWindow ? 1 : 0;
@@ -33,7 +71,7 @@ internal class Statistics : IStatistics
         }
 
         return results
-            .Select((r, i) => new Models.NamedValue<double>(GazeAreas[i], r / _records.Length))
+            .Select((r, i) => new Models.NamedValue<double>(GazeAreas[i], r / (stopIndex - startIndex + 1)))
             .ToArray();
     }
 

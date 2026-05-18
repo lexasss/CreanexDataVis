@@ -87,7 +87,7 @@ internal class TimelineRenderer
 
         var host = new VisualHost([tracks, timeline])
         {
-            RenderTransform = new TranslateTransform(-(blankPeriodBefore + blankPeriodAfter) * MsToPixel, 0),
+            RenderTransform = new TranslateTransform(-blankPeriodBefore * MsToPixel, 0),
             Width = (duration - blankPeriodBefore - blankPeriodAfter) * MsToPixel + Margin,
             Height = trackCount * (TrackHeight + TrackSpacing) + Margin + TrackHeight
         };

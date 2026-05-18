@@ -52,6 +52,8 @@ internal partial class Statistics : ObservableObject
 
     #region Internal
 
+    const bool INCLUDE_HEADERS = false;
+
     readonly Services.IStatistics _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
     readonly Services.ILogFileService _logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
 
@@ -64,14 +66,28 @@ internal partial class Statistics : ObservableObject
     {
         List<string> lines = [];
 
-        foreach (var item in GeneralItems)
-            lines.Add($"{item.Name}\t{item.Value}");
-        foreach (var item in AttentionShares)
-            lines.Add($"{item.Name}\t{item.Value:F2}");
-        foreach (var item in AttentionCounts)
-            lines.Add($"{item.Name}\t{item.Value}");
-        foreach (var item in Operations)
-            lines.Add($"{item.Name}\t{item.Value}");
+        if (INCLUDE_HEADERS)
+        {
+            foreach (var item in GeneralItems)
+                lines.Add($"{item.Name}\t{item.Value}");
+            foreach (var item in AttentionShares)
+                lines.Add($"{item.Name}\t{item.Value:F2}");
+            foreach (var item in AttentionCounts)
+                lines.Add($"{item.Name}\t{item.Value}");
+            foreach (var item in Operations)
+                lines.Add($"{item.Name}\t{item.Value}");
+        }
+        else
+        {
+            foreach (var item in GeneralItems)
+                lines.Add($"{item.Value}");
+            foreach (var item in AttentionShares)
+                lines.Add($"{item.Value:F2}");
+            foreach (var item in AttentionCounts)
+                lines.Add($"{item.Value}");
+            foreach (var item in Operations)
+                lines.Add($"{item.Value}");
+        }   
 
         Clipboard.SetText(string.Join('\n', lines));
 
