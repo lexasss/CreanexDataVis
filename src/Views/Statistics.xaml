@@ -170,7 +170,8 @@
                 </WrapPanel.Resources>
             
                 <Button Style="{StaticResource copy}"
-                        Command="{Binding CopyToClipboardCommand}">
+                        Command="{Binding CopyToClipboardCommand}"
+                        ToolTip="Copies all fields to the clipboard.\nKeep Control button to include headers">
                     <ContentControl Template="{StaticResource copySign}"/>
                 </Button>
             </WrapPanel>

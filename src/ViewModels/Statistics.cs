@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace CreanexDataVis.ViewModels;
 
@@ -28,7 +29,7 @@ internal partial class Statistics : ObservableObject
     public Statistics()
     {
         GeneralItems.Add(new Models.NamedValue<string>("Participant", _logFileService.Participant ?? "-"));
-        GeneralItems.Add(new Models.NamedValue<string>("File", _logFileService.CreanexLogFile ?? "-"));
+        //GeneralItems.Add(new Models.NamedValue<string>("File", System.IO.Path.GetFileNameWithoutExtension(_logFileService.CreanexLogFile) ?? "-"));
         GeneralItems.Add(new Models.NamedValue<string>("Condition", _logFileService.Condition ?? "-"));
 
         var attentionShares = _statisticsService.GetAttentionShares();
@@ -52,8 +53,6 @@ internal partial class Statistics : ObservableObject
 
     #region Internal
 
-    const bool INCLUDE_HEADERS = false;
-
     readonly Services.IStatistics _statisticsService = App.ServiceProvider.GetService<Services.IStatistics>()!;
     readonly Services.ILogFileService _logFileService = App.ServiceProvider.GetService<Services.ILogFileService>()!;
 
@@ -66,7 +65,7 @@ internal partial class Statistics : ObservableObject
     {
         List<string> lines = [];
 
-        if (INCLUDE_HEADERS)
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             foreach (var item in GeneralItems)
                 lines.Add($"{item.Name}\t{item.Value}");

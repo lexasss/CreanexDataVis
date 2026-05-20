@@ -165,9 +165,13 @@ internal class Statistics : IStatistics
         if (_records == null)
             return [];
 
-        long[] results = [0, 0, 0];
+        long[] results = [0, 0, 0, 0, 0];
 
+        long firstTimestamp = _records.Length > 0 ? _records[0].Timestamp : 0;
         long drivingStartTimestamp = 0;
+        long firstTreeGrabTimestamp = 0;
+        long lastTreeGrabTimestamp = 0;
+
         foreach (var record in _records)
         {
             results[0] += record.GrabTargetTreeId > 0 ? 1 : 0;
@@ -177,11 +181,25 @@ internal class Statistics : IStatistics
                 drivingStartTimestamp = record.Timestamp;
             else if (record.DrivingEnd != 0)
                 results[2] += record.Timestamp - drivingStartTimestamp;
+
+            if (record.GrabTargetTreeId > 0 || record.GrabNonTargetTreeId > 0)
+            {
+                if (firstTreeGrabTimestamp == 0)
+                    firstTreeGrabTimestamp = record.Timestamp;
+                lastTreeGrabTimestamp = record.Timestamp;
+            }
+
+            if (record.HasGazeAOI)
+            {
+                results[3] = record.Timestamp - firstTimestamp;
+            }
         }
 
+        results[4] = lastTreeGrabTimestamp - firstTreeGrabTimestamp;
+
         return results
-            .Select((r, i) => i == 2
-                ? new Models.NamedValue<double>(Operations[i], (double)(r / 100) / 10)    // driving duration
+            .Select((r, i) => i >= 2
+                ? new Models.NamedValue<double>(Operations[i], (double)(r / 100) / 10)    // durations are converted from milliseconds to seconds and rounded to 1 decimal place
                 : new Models.NamedValue<double>(Operations[i], r))
             .ToArray();
     }
@@ -213,6 +231,8 @@ internal class Statistics : IStatistics
         "Correct trees grabbed",
         "Incorrect trees grabbed",
         "Driving duration, sec",
+        "Test duration, sec",
+        "Tree felling period, sec",
     ];
 
     Models.TimelineRecord[]? _records;

@@ -132,7 +132,8 @@
             <Label>Tree (+ID)</Label>
         </StackPanel>
 
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2"
+              Background="Black">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition/>
@@ -185,22 +186,22 @@
                               CommandParameter="2"
                               IsChecked="{Binding VisColumn3.IsExpanded, Mode=TwoWay}"/>
             </StackPanel>
-            <Grid Grid.Row="1" Grid.Column="0"
-                  Background="Black">
-                <MediaElement x:Name="VideoPlayer" 
-                              MinWidth="480"
-                              MinHeight="320"
-                              Stretch="Uniform"
-                              LoadedBehavior="Manual"
-                              UnloadedBehavior="Manual"/>
-            </Grid>
             
-            <ScrollViewer Grid.Row="1" Grid.Column="1"
+            <MediaElement x:Name="VideoPlayer" 
+                          Grid.Row="1" Grid.Column="0"
+                          Stretch="Uniform"
+                          LoadedBehavior="Manual"
+                          UnloadedBehavior="Manual"/>
+
+            <ContentControl Grid.Row="1" Grid.Column="1"
+                            Content="{Binding GazePlot}"
+                            Background="Black"/>
+            <!--ScrollViewer Grid.Row="1" Grid.Column="1"
                           Content="{Binding GazePlot}"
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
                           VerticalAlignment="Top"
-                          Background="Black"/>
+                          Background="Black"/-->
 
             <hx:Viewport3DX Grid.Row="1" Grid.Column="2"
                             EffectsManager="{Binding GazePlotEffectsManager}" 

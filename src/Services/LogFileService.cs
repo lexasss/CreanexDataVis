@@ -57,7 +57,7 @@ internal class LogFileService : ILogFileService
             var folder = ofd.FolderName;
 
             var creanexLogFiles = Directory.GetFiles(folder, CreanexLogFilePattern);
-            if (creanexLogFiles.Length == 3)    // study log file
+            if (creanexLogFiles.Length == 3)    // study log data
             {
                 LoadStudyData(folder, creanexLogFiles);
             }
@@ -73,10 +73,9 @@ internal class LogFileService : ILogFileService
     }
 
     /// <summary>
-    /// Use this method to change the currently selected Creanex log file when a study folder was selected
-    /// (e.g. when user selects another log file from the dropdown list)
+    /// Changes the currently selected Creanex log file from the study folder
     /// </summary>
-    /// <param name="filename">the file name without the folder path</param>
+    /// <param name="filename">the file name without a folder path</param>
     public void SetCreanexLogFile(string? filename)
     {
         if (Folder == null || filename == null)
@@ -101,11 +100,12 @@ internal class LogFileService : ILogFileService
 
             CreanexLogFile = Path.Combine(Folder, filename);
             VarjoLogFile = GetVarjoLogFile(Folder, CreanexLogFile);
+            VideoFile = GetVideoFile(Folder, filename);
         }
 
-        CreanexLogFileSelected?.Invoke(this, CreanexLogFile == null || Condition == null ? null : CreanexLogFile);
-        VarjoLogFileSelected?.Invoke(this, VarjoLogFile == null || Condition == null ? null : VarjoLogFile);
-        VideoFileSelected?.Invoke(this, null);
+        CreanexLogFileSelected?.Invoke(this, CreanexLogFile);
+        VarjoLogFileSelected?.Invoke(this, VarjoLogFile);
+        VideoFileSelected?.Invoke(this, VideoFile);
     }
 
 
@@ -139,11 +139,11 @@ internal class LogFileService : ILogFileService
 
         var creanexLogFiles = Directory.GetFiles(folder, CreanexLogFilePattern);
         CreanexLogFile = creanexLogFiles.Length > 0 ? creanexLogFiles[0] : null;
-        CreanexLogFileSelected?.Invoke(this, CreanexLogFile == null ? null : CreanexLogFile);
+        CreanexLogFileSelected?.Invoke(this, CreanexLogFile);
 
         var varjoLogFiles = Directory.GetFiles(folder, VarjoLogFilePattern);
         VarjoLogFile = varjoLogFiles.Length > 0 ? varjoLogFiles[0] : null;
-        VarjoLogFileSelected?.Invoke(this, VarjoLogFile == null ? null : VarjoLogFile);
+        VarjoLogFileSelected?.Invoke(this, VarjoLogFile);
 
         var videoFiles = Directory.GetFiles(folder, VideoFilePattern);
         VideoFile = videoFiles.Length > 0 ? videoFiles[0] : null;
@@ -176,6 +176,23 @@ internal class LogFileService : ILogFileService
                 return files[0];
         }
         catch { }
+
+        return null;
+    }
+
+    private string? GetVideoFile(string folder, string? creanexLogFile)
+    {
+        if (string.IsNullOrEmpty(folder) || creanexLogFile == null)
+            return null;
+
+        int index = Array.IndexOf(FolderCreanexFiles, creanexLogFile);
+        if (index >= 0)
+        {
+            var patternComp = VideoFilePattern.Split('*');
+            var videoFilename = Path.Combine(folder, $"{index + 1}{patternComp[1]}");
+            if (File.Exists(videoFilename))
+                return videoFilename;
+        }
 
         return null;
     }

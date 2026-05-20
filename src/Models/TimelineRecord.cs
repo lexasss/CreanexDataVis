@@ -13,4 +13,6 @@ internal class TimelineRecord
     public int GrabNonTargetTreeId;
     public int DrivingStart;
     public int DrivingEnd;
+
+    public bool HasGazeAOI => GazeLeftWindow || GazeFrontWindow || GazeRightWindow || GazeTDAScreen || GazeHarvesterHead || GazeTargetTreeId > 0;
 }
