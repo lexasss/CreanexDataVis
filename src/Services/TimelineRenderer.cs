@@ -64,11 +64,12 @@ internal class TimelineRenderer
         return CreateBitmapSource(bitmap, startTime, eventsRange);
     }
 
-    public Canvas? Create(TimelineRecord[] records, out double secondsOffset)
+    public Canvas? Create(TimelineRecord[] records, out double secondsOffset, out double trackDuration)
     {
         if (records.Length == 0)
         {
             secondsOffset = 0;
+            trackDuration = 0;
             return null;
         }
 
@@ -110,6 +111,8 @@ internal class TimelineRenderer
         };
 
         secondsOffset = (double)(eventsRange.Start - startTime - 1000) / 1000;  // -1000 due to padding
+        trackDuration = (duration - blankPeriodBefore - blankPeriodAfter) / 1000.0;
+
         return canvas;
     }
 

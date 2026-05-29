@@ -25,7 +25,17 @@ public partial class MainWindow : Window
             {
                 vm.TogglePlayVideoCommand.Execute(null);
                 e.Handled = true; // prevent TextBox from inserting space
+                Focus();
             }
+        }
+    }
+
+    private void TextBox_KeyUp(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Tab)
+        {
+            Focus();
+            e.Handled = true;
         }
     }
 }

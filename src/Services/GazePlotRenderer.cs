@@ -122,7 +122,7 @@ internal class GazePlotRenderer
     const int WarningHeight = 50;
 
     readonly Pen CoordGridPen = new(Brushes.DarkGray, 2);
-    readonly Brush GazeMarkBrush = Brushes.Black;
+    readonly Brush GazeMarkBrush = Brushes.Red;
     readonly Typeface WarningFontFamily = new("Segoe UI");
     readonly Brush WarningFontBrush = Brushes.Black;
 

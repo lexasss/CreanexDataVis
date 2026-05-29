@@ -22,9 +22,16 @@
     </Window.DataContext>
     
     <Window.InputBindings>
-        <KeyBinding 
-            Key="Space" 
-            Command="{Binding TogglePlayVideoCommand}" />
+        <KeyBinding Key="Space" 
+                    Command="{Binding TogglePlayVideoCommand}"/>
+        <KeyBinding Key="Home" 
+                    Command="{Binding SetPlaybackTimeToStartCommand}"/>
+        <KeyBinding Key="End" 
+                    Command="{Binding SetPlaybackTimeToEndCommand}"/>
+        <KeyBinding Key="Left" 
+                    Command="{Binding RewindPlaybackTimeCommand}"/>
+        <KeyBinding Key="Right" 
+                    Command="{Binding ForwardPlaybackTimeCommand}"/>
     </Window.InputBindings>
     
     <Window.Resources>
@@ -99,7 +106,8 @@
             <ToolBar IsEnabled="{Binding IsPlaybackEnabled}">
                 <Label Content="Video delays"/>
                 <TextBox Width="40"
-                         Text="{Binding VideoDelay, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding VideoDelay, UpdateSourceTrigger=PropertyChanged}"
+                         KeyUp="TextBox_KeyUp"/>
                 <Label Content="seconds"/>
             </ToolBar>
         </ToolBarTray>

@@ -119,6 +119,7 @@ internal partial class MainViewModel : ObservableObject
     const int ExpandedColumnStarWidth = 3;
     const double TimelineMarkMaxRight = 0.8;
     const double TimelineMarkMinLeft = 0.05;
+    const double TimelineRewindStep = 5;   // seconds
 
     readonly static string VideoCommandPlayLabel = "▶";
     readonly static string VideoCommandPauseLabel = "⏸";
@@ -135,6 +136,7 @@ internal partial class MainViewModel : ObservableObject
     Services.GazePointTranslationService? _gazePointTranslationService;
 
     double _timelineOffset;
+    double _timelineDuration;
     Point _gazePlotOffset;
 
     #region OnChange handlers for observable properties
@@ -186,6 +188,49 @@ internal partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void SetPlaybackTimeToStart()
+    {
+        if (_mediaPlayerService.IsPlaying != true && IsPlaybackEnabled)
+        {
+            PlaybackTime = 0;
+            BringPlaybackMarkerIntoView();
+            UpdateGazePointLocation();
+        }
+    }
+
+    [RelayCommand]
+    private void SetPlaybackTimeToEnd()
+    {
+        if (_mediaPlayerService.IsPlaying != true && IsPlaybackEnabled)
+        {
+            PlaybackTime = _timelineDuration;
+            BringPlaybackMarkerIntoView();
+            UpdateGazePointLocation();
+        }
+    }
+
+    [RelayCommand]
+    private void RewindPlaybackTime()
+    {
+        if (_mediaPlayerService.IsPlaying != true && IsPlaybackEnabled)
+        {
+            PlaybackTime = Math.Max(0, PlaybackTime - TimelineRewindStep);
+            BringPlaybackMarkerIntoView();
+            UpdateGazePointLocation();
+        }
+    }
+
+    [RelayCommand]
+    private void ForwardPlaybackTime()
+    {
+        if (_mediaPlayerService.IsPlaying != true && IsPlaybackEnabled)
+        {
+            PlaybackTime = Math.Min(_timelineDuration, PlaybackTime + TimelineRewindStep);
+            BringPlaybackMarkerIntoView();
+            UpdateGazePointLocation();
+        }
+    }
 
     [RelayCommand]
     private void ChangeVisColumnWidth(string column)
@@ -236,7 +281,7 @@ internal partial class MainViewModel : ObservableObject
             _statisticsService.SetData(_timelineParser.Records);
 
             var renderer = new Services.TimelineRenderer();
-            var canvas = renderer.Create(_timelineParser.Records, out _timelineOffset);
+            var canvas = renderer.Create(_timelineParser.Records, out _timelineOffset, out _timelineDuration);
 
             if (canvas == null)
             {
@@ -330,28 +375,18 @@ internal partial class MainViewModel : ObservableObject
         {
             VideoDelay = videoDelay;
         }
+        else
+        {
+            VideoDelay = 0;
+        }
     }
 
     private void MediaPlayerService_ProgressChanged(object? sender, double e)
     {
         PlaybackTime = e + VideoDelay;
 
-        var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
-        if (TimelineScrollX < x - TimelineMarkMaxRight * TimelineWidth)
-        {
-            TimelineScrollX = x - TimelineMarkMaxRight * TimelineWidth;
-        }
-        else if (TimelineScrollX > x - TimelineMarkMinLeft * TimelineWidth)
-        {
-            TimelineScrollX = x - TimelineMarkMinLeft * TimelineWidth;
-        }
-
-        if (_gazePointTranslationService != null)
-        {
-            var currentGazeData = _gazePointTranslationService.GetGazeDataAt(PlaybackTime + _timelineOffset);
-            GazePointPosition = _gazePointTranslationService.GetPosition2D(currentGazeData);
-            GazePlot3DHeadTransform = Services.GazePointTranslationService.GetPosition3D(currentGazeData);
-        }
+        BringPlaybackMarkerIntoView();
+        UpdateGazePointLocation();
     }
 
     private void MediaPlayerService_Stopped(object? sender, EventArgs e)
@@ -361,7 +396,30 @@ internal partial class MainViewModel : ObservableObject
         TogglePlayVideoCommandLabel = VideoCommandPlayLabel;
     }
 
+    private void UpdateGazePointLocation()
+    {
+        if (_gazePointTranslationService != null)
+        {
+            var currentGazeData = _gazePointTranslationService.GetGazeDataAt(PlaybackTime + _timelineOffset);
+            GazePointPosition = _gazePointTranslationService.GetPosition2D(currentGazeData);
+            GazePlot3DHeadTransform = Services.GazePointTranslationService.GetPosition3D(currentGazeData);
+        }
+    }
+
     #endregion
+
+    private void BringPlaybackMarkerIntoView()
+    {
+        var x = Services.TimelineRenderer.SecondsToPixels(PlaybackTime);
+        if (TimelineScrollX < x - TimelineMarkMaxRight * TimelineWidth)
+        {
+            TimelineScrollX = x - TimelineMarkMaxRight * TimelineWidth;
+        }
+        else if (TimelineScrollX > x - TimelineMarkMinLeft * TimelineWidth)
+        {
+            TimelineScrollX = x - TimelineMarkMinLeft * TimelineWidth;
+        }
+    }
 
     private void TimelineCanvas_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
